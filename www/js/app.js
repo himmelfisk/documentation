@@ -794,7 +794,7 @@
       en_default = {
         "app.title": "Documentation",
         "app.welcome": "Welcome to the Documentation app.",
-        "photo.addButton": "\u{1F4F7} Add Photo",
+        "photo.addButton": "\u{1F4F7} Submit Documentation",
         "photo.altText": "Captured photo"
       };
     }
@@ -807,7 +807,7 @@
       no_default = {
         "app.title": "Dokumentasjon",
         "app.welcome": "Velkommen til Dokumentasjon-appen.",
-        "photo.addButton": "\u{1F4F7} Legg til bilde",
+        "photo.addButton": "\u{1F4F7} Send inn dokumentasjon",
         "photo.altText": "Tatt bilde"
       };
     }
@@ -866,7 +866,7 @@
       init_en();
       init_no();
       locales = { en: en_default, no: no_default };
-      DEFAULT_LOCALE = "en";
+      DEFAULT_LOCALE = "no";
       STORAGE_KEY = "app_locale";
       current = DEFAULT_LOCALE;
     }
