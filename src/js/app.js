@@ -1,12 +1,17 @@
 import { Capacitor } from '@capacitor/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 
-document.addEventListener('DOMContentLoaded', () => {
+function init() {
   const platform = Capacitor.getPlatform();
   console.log(`Running on platform: ${platform}`);
 
   const takePhotoBtn = document.getElementById('take-photo-btn');
   const photoImage = document.getElementById('photo-image');
+
+  if (!takePhotoBtn) {
+    console.error('take-photo-btn not found in DOM');
+    return;
+  }
 
   takePhotoBtn.addEventListener('click', async () => {
     try {
@@ -25,4 +30,10 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log('Photo cancelled or failed:', err);
     }
   });
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}

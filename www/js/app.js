@@ -792,11 +792,15 @@
     "src/js/app.js"() {
       init_dist();
       init_esm();
-      document.addEventListener("DOMContentLoaded", () => {
+      function init() {
         const platform = Capacitor.getPlatform();
         console.log(`Running on platform: ${platform}`);
         const takePhotoBtn = document.getElementById("take-photo-btn");
         const photoImage = document.getElementById("photo-image");
+        if (!takePhotoBtn) {
+          console.error("take-photo-btn not found in DOM");
+          return;
+        }
         takePhotoBtn.addEventListener("click", async () => {
           try {
             const photo = await Camera2.getPhoto({
@@ -813,7 +817,12 @@
             console.log("Photo cancelled or failed:", err);
           }
         });
-      });
+      }
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+      } else {
+        init();
+      }
     }
   });
   require_app();
