@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "esbuild src/js/app.js --bundle --format=esm --outfile=www/js/app.js",
+    "build": "esbuild src/js/app.js --bundle --format=iife --outfile=www/js/app.js",
     "cap:sync": "cap sync",
     "cap:sync:android": "cap sync android",
     "cap:sync:ios": "cap sync ios",
