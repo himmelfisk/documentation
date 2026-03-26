@@ -25,6 +25,7 @@
   "homepage": "https://github.com/himmelfisk/documentation#readme",
   "dependencies": {
     "@capacitor/android": "^8.3.0",
+    "@capacitor/camera": "^8.0.2",
     "@capacitor/core": "^8.3.0",
     "@capacitor/ios": "^8.3.0"
   },
