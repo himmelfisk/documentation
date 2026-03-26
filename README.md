@@ -41,3 +41,82 @@ npx cap open ios
 1. Make changes to files in the `www/` directory.
 2. Run `npx cap sync` to copy web assets into the native projects.
 3. Build and run from Android Studio or Xcode.
+
+---
+
+## Installing on Android
+
+1. **Install prerequisites** – Install [Node.js](https://nodejs.org/) (v18+) and [Android Studio](https://developer.android.com/studio) with the Android SDK.
+2. **Clone the repository and install dependencies:**
+   ```bash
+   git clone https://github.com/himmelfisk/documentation.git
+   cd documentation
+   npm install
+   ```
+3. **Sync web assets into the Android project:**
+   ```bash
+   npx cap sync android
+   ```
+4. **Open the project in Android Studio:**
+   ```bash
+   npx cap open android
+   ```
+5. **Run on a device or emulator** – In Android Studio, select your target device and click **Run ▶**. To use a physical device, enable *USB debugging* in the device's Developer Options and connect it via USB.
+
+## Installing on iOS
+
+> **Note:** Building for iOS requires a Mac with [Xcode](https://developer.apple.com/xcode/) installed.
+
+1. **Install prerequisites** – Install [Node.js](https://nodejs.org/) (v18+), Xcode (from the Mac App Store), and the Xcode Command Line Tools (`xcode-select --install`).
+2. **Clone the repository and install dependencies:**
+   ```bash
+   git clone https://github.com/himmelfisk/documentation.git
+   cd documentation
+   npm install
+   ```
+3. **Sync web assets into the iOS project:**
+   ```bash
+   npx cap sync ios
+   ```
+4. **Open the project in Xcode:**
+   ```bash
+   npx cap open ios
+   ```
+5. **Configure signing** – In Xcode, select the project target, go to **Signing & Capabilities**, and choose your development team.
+6. **Run on a device or simulator** – Select your target device in the Xcode toolbar and click **Run ▶**. For a physical device, connect it via USB and trust the computer on the device.
+
+## Using the App
+
+The Documentation app is a lightweight webview application. After launching:
+
+1. **Home screen** – The app opens with a welcome screen displaying the app title and introductory text.
+2. **Navigation** – Interact with the app as you would a normal web page; all content is rendered inside a native webview.
+3. **Live development** – During development you can edit the files in the `www/` directory (HTML, CSS, JavaScript), run `npx cap sync`, and relaunch the app to see your changes.
+4. **Hot reload (optional)** – For faster iteration, configure Capacitor's [live reload](https://capacitorjs.com/docs/guides/live-reload) to see changes instantly without rebuilding.
+
+## Publishing to Google Play Store
+
+1. **Create a Google Play Developer account** at <https://play.google.com/console/signup> (one-time $25 registration fee).
+2. **Generate a signed release build:**
+   - In Android Studio, go to **Build → Generate Signed Bundle / APK**.
+   - Choose **Android App Bundle (.aab)** (recommended by Google).
+   - Create or select a keystore, fill in the key details, and build the release bundle.
+3. **Prepare the store listing** – In the [Google Play Console](https://play.google.com/console), create a new app and fill in the required details: app name, description, screenshots, feature graphic, and content rating.
+4. **Upload the bundle** – Under **Release → Production**, create a new release and upload the `.aab` file generated in step 2.
+5. **Review and roll out** – Complete the content declarations, set pricing and distribution, then submit for review. Google typically reviews apps within a few hours to a few days.
+
+## Publishing to Apple's App Store
+
+1. **Enroll in the Apple Developer Program** at <https://developer.apple.com/programs/> ($99/year).
+2. **Configure the project in Xcode:**
+   - Set the correct *Bundle Identifier* (matching `com.himmelfisk.documentation` in `capacitor.config.json`).
+   - Under **Signing & Capabilities**, select your distribution team and provisioning profile.
+   - Set the *Version* and *Build* numbers.
+3. **Create an archive:**
+   - In Xcode, select **Any iOS Device** as the build target.
+   - Go to **Product → Archive**.
+4. **Upload to App Store Connect:**
+   - In the Xcode Organizer window, select the archive and click **Distribute App**.
+   - Choose **App Store Connect** and follow the prompts to upload.
+5. **Prepare the store listing** – In [App Store Connect](https://appstoreconnect.apple.com/), create a new app entry, fill in the metadata (description, keywords, screenshots, app preview), and select the uploaded build.
+6. **Submit for review** – Once all required information is complete, submit the app. Apple's review typically takes one to two days.
