@@ -787,12 +787,99 @@
     }
   });
 
+  // src/locales/en.json
+  var en_default;
+  var init_en = __esm({
+    "src/locales/en.json"() {
+      en_default = {
+        "app.title": "Documentation",
+        "app.welcome": "Welcome to the Documentation app.",
+        "photo.addButton": "\u{1F4F7} Add Photo",
+        "photo.altText": "Captured photo"
+      };
+    }
+  });
+
+  // src/locales/no.json
+  var no_default;
+  var init_no = __esm({
+    "src/locales/no.json"() {
+      no_default = {
+        "app.title": "Dokumentasjon",
+        "app.welcome": "Velkommen til Dokumentasjon-appen.",
+        "photo.addButton": "\u{1F4F7} Legg til bilde",
+        "photo.altText": "Tatt bilde"
+      };
+    }
+  });
+
+  // src/js/i18n.js
+  function getSavedLocale() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved && locales[saved]) return saved;
+    } catch (_) {
+    }
+    return DEFAULT_LOCALE;
+  }
+  function saveLocale(code) {
+    try {
+      localStorage.setItem(STORAGE_KEY, code);
+    } catch (_) {
+    }
+  }
+  function t(key) {
+    const bundle = locales[current] || locales[DEFAULT_LOCALE];
+    return bundle[key] ?? locales[DEFAULT_LOCALE][key] ?? key;
+  }
+  function applyTranslations() {
+    document.querySelectorAll("[data-i18n]").forEach((el) => {
+      const key = el.getAttribute("data-i18n");
+      const attr = el.getAttribute("data-i18n-attr");
+      if (attr) {
+        el.setAttribute(attr, t(key));
+      } else {
+        el.textContent = t(key);
+      }
+    });
+  }
+  function setLocale(code) {
+    if (!locales[code]) return;
+    current = code;
+    saveLocale(code);
+    document.documentElement.lang = code;
+    applyTranslations();
+  }
+  function initI18n() {
+    current = getSavedLocale();
+    document.documentElement.lang = current;
+    const selector = document.getElementById("language-selector");
+    if (selector) {
+      selector.value = current;
+      selector.addEventListener("change", (e) => setLocale(e.target.value));
+    }
+    applyTranslations();
+  }
+  var locales, DEFAULT_LOCALE, STORAGE_KEY, current;
+  var init_i18n = __esm({
+    "src/js/i18n.js"() {
+      init_en();
+      init_no();
+      locales = { en: en_default, no: no_default };
+      DEFAULT_LOCALE = "en";
+      STORAGE_KEY = "app_locale";
+      current = DEFAULT_LOCALE;
+    }
+  });
+
   // src/js/app.js
   var require_app = __commonJS({
     "src/js/app.js"() {
       init_dist();
       init_esm();
+      init_i18n();
       function init() {
+        initI18n();
         const platform = Capacitor.getPlatform();
         console.log(`Running on platform: ${platform}`);
         const takePhotoBtn = document.getElementById("take-photo-btn");

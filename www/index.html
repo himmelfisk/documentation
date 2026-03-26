@@ -8,14 +8,21 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <div id="language-bar">
+    <select id="language-selector">
+      <option value="en">English</option>
+      <option value="no">Norsk</option>
+    </select>
+  </div>
+
   <div id="app">
-    <h1>Documentation</h1>
-    <p>Welcome to the Documentation app.</p>
+    <h1 data-i18n="app.title">Documentation</h1>
+    <p data-i18n="app.welcome">Welcome to the Documentation app.</p>
 
     <div id="photo-section">
-      <button id="take-photo-btn" style="display:inline-block;padding:12px 24px;background:#007aff;color:#fff;border:none;border-radius:8px;font-size:16px;">📷 Add Photo</button>
+      <button id="take-photo-btn" data-i18n="photo.addButton">📷 Add Photo</button>
       <div id="photo-preview">
-        <img id="photo-image" alt="Captured photo" hidden>
+        <img id="photo-image" alt="Captured photo" data-i18n="photo.altText" data-i18n-attr="alt" hidden>
       </div>
     </div>
   </div>
