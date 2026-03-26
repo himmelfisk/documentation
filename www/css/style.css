@@ -5,8 +5,8 @@
 }
 
 :root {
-  --safe-area-top: env(safe-area-inset-top);
-  --safe-area-bottom: env(safe-area-inset-bottom);
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 body {
@@ -45,6 +45,8 @@ p {
 }
 
 #take-photo-btn {
+  -webkit-appearance: none;
+  appearance: none;
   display: inline-block;
   padding: 12px 24px;
   font-size: 1rem;
