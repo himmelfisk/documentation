@@ -2,6 +2,9 @@
 
 A cross-platform mobile app built with [Capacitor](https://capacitorjs.com/), targeting Android and iOS via a webview.
 
+> **📋 For the full project vision, architecture, and milestones see
+> [PROJECT_GOALS.md](PROJECT_GOALS.md).**
+
 ## Project Structure
 
 ```
