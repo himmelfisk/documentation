@@ -16,8 +16,11 @@ document.addEventListener('DOMContentLoaded', () => {
         quality: 90,
       });
 
-      photoImage.src = photo.webPath;
-      photoImage.hidden = false;
+      const imageSrc = photo.webPath || photo.path;
+      if (imageSrc) {
+        photoImage.src = imageSrc;
+        photoImage.hidden = false;
+      }
     } catch (err) {
       console.log('Photo cancelled or failed:', err);
     }
