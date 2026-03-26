@@ -16,9 +16,44 @@ capacitor.config.json
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) (v18+)
+- [Node.js](https://nodejs.org/) (v18+) — includes **npm** and **npx**
 - For Android: [Android Studio](https://developer.android.com/studio)
 - For iOS: [Xcode](https://developer.apple.com/xcode/) (macOS only)
+
+### Installing Node.js, npm, and npx
+
+npm and npx are bundled with Node.js, so installing Node.js gives you all three.
+
+**macOS** (using [Homebrew](https://brew.sh/)):
+
+```bash
+brew install node
+```
+
+**Windows** (using [Chocolatey](https://chocolatey.org/)):
+
+```bash
+choco install nodejs
+```
+
+**Linux (Debian/Ubuntu)**:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y nodejs npm
+```
+
+> If your distribution's default Node.js version is too old, follow the
+> [NodeSource installation instructions](https://github.com/nodesource/distributions#installation-instructions)
+> to get a newer release.
+
+**Verify the installation**:
+
+```bash
+node --version
+npm --version
+npx --version
+```
 
 ## Getting Started
 
