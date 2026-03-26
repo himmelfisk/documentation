@@ -1,4 +1,5 @@
 import { PublicClientApplication } from '@azure/msal-browser';
+import { Capacitor } from '@capacitor/core';
 
 /**
  * MSAL authentication module.
@@ -6,13 +7,37 @@ import { PublicClientApplication } from '@azure/msal-browser';
  * Wraps @azure/msal-browser to provide a simple login gate for the app.
  * Replace the clientId and authority below with values from your Azure AD
  * (Entra ID) app registration.
+ *
+ * The following redirect URIs must be registered in your Azure AD app
+ * registration as **Single-page application (SPA)** redirect URIs:
+ *
+ *   Android : https://localhost
+ *   iOS     : capacitor://localhost
+ *   Web     : your web server origin (e.g. http://localhost:3000)
+ *
+ * On native platforms (Android/iOS) the redirect-based auth flow is used
+ * because popup windows do not work reliably inside Capacitor WebViews.
  */
+
+/** Resolve the correct redirect URI for the current platform. */
+function getRedirectUri() {
+  switch (Capacitor.getPlatform()) {
+    case 'android':
+      return 'https://localhost';
+    case 'ios':
+      return 'capacitor://localhost';
+    default:
+      return window.location.origin;
+  }
+}
+
+const isNative = Capacitor.isNativePlatform();
 
 const msalConfig = {
   auth: {
     clientId: '65702384-9248-47a3-80d9-bcf5abb69424',
     authority: 'https://login.microsoftonline.com/common',
-    redirectUri: window.location.origin,
+    redirectUri: getRedirectUri(),
   },
   cache: {
     cacheLocation: 'localStorage',
@@ -50,20 +75,32 @@ export async function initAuth() {
 }
 
 /**
- * Start an interactive login (popup).
- * @returns {Promise<import('@azure/msal-browser').AccountInfo>}
+ * Start an interactive login.
+ * Uses redirect flow on native platforms (Android/iOS) because popups
+ * do not work reliably inside Capacitor WebViews.
+ * Returns the account on web (popup) or null on native (redirect navigates away).
+ * @returns {Promise<import('@azure/msal-browser').AccountInfo|null>}
  */
 export async function login() {
+  if (isNative) {
+    await msalInstance.loginRedirect(loginRequest);
+    return null;
+  }
   const response = await msalInstance.loginPopup(loginRequest);
   currentAccount = response.account;
   return currentAccount;
 }
 
 /**
- * Log the current user out (popup).
+ * Log the current user out.
+ * Uses redirect flow on native, popup on web.
  */
 export async function logout() {
-  await msalInstance.logoutPopup();
+  if (isNative) {
+    await msalInstance.logoutRedirect();
+  } else {
+    await msalInstance.logoutPopup();
+  }
   currentAccount = null;
 }
 

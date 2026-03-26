@@ -45,7 +45,7 @@ async function init() {
 
       try {
         const acct = await login();
-        showApp(acct);
+        if (acct) showApp(acct);
       } catch (err) {
         console.error('Login failed:', err);
         if (loginError) {

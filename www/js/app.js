@@ -15479,6 +15479,16 @@
   });
 
   // src/js/auth.js
+  function getRedirectUri2() {
+    switch (Capacitor.getPlatform()) {
+      case "android":
+        return "https://localhost";
+      case "ios":
+        return "capacitor://localhost";
+      default:
+        return window.location.origin;
+    }
+  }
   async function initAuth() {
     msalInstance = new PublicClientApplication(msalConfig);
     await msalInstance.initialize();
@@ -15494,23 +15504,33 @@
     return currentAccount;
   }
   async function login() {
+    if (isNative) {
+      await msalInstance.loginRedirect(loginRequest);
+      return null;
+    }
     const response = await msalInstance.loginPopup(loginRequest);
     currentAccount = response.account;
     return currentAccount;
   }
   async function logout() {
-    await msalInstance.logoutPopup();
+    if (isNative) {
+      await msalInstance.logoutRedirect();
+    } else {
+      await msalInstance.logoutPopup();
+    }
     currentAccount = null;
   }
-  var msalConfig, loginRequest, msalInstance, currentAccount;
+  var isNative, msalConfig, loginRequest, msalInstance, currentAccount;
   var init_auth = __esm({
     "src/js/auth.js"() {
       init_dist2();
+      init_dist();
+      isNative = Capacitor.isNativePlatform();
       msalConfig = {
         auth: {
           clientId: "65702384-9248-47a3-80d9-bcf5abb69424",
           authority: "https://login.microsoftonline.com/common",
-          redirectUri: window.location.origin
+          redirectUri: getRedirectUri2()
         },
         cache: {
           cacheLocation: "localStorage",
@@ -15562,7 +15582,7 @@
             if (loginError) loginError.hidden = true;
             try {
               const acct = await login();
-              showApp(acct);
+              if (acct) showApp(acct);
             } catch (err) {
               console.error("Login failed:", err);
               if (loginError) {
