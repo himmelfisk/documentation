@@ -38,11 +38,11 @@ const isNative = Capacitor.isNativePlatform();
  *
  * MSAL stores temporary interaction state (PKCE code-verifier, request params,
  * interaction status) in sessionStorage regardless of the cacheLocation config.
- * Capacitor's Android WebView can lose sessionStorage when the custom
- * shouldOverrideUrlLoading handler uses loadUrl() to navigate back from the
- * identity provider.  MSAL's internal getTemporaryCache() already contains a
- * fallback that checks localStorage when cacheLocation is 'localStorage', so
- * mirroring the writes here is enough to make the redirect flow succeed.
+ * Capacitor's WebView may lose sessionStorage across navigations (e.g. when
+ * returning from the identity provider).  MSAL's internal getTemporaryCache()
+ * already contains a fallback that checks localStorage when cacheLocation is
+ * 'localStorage', so mirroring the writes here is enough to make the redirect
+ * flow succeed.
  */
 if (isNative) {
   const _setItem = sessionStorage.setItem.bind(sessionStorage);
@@ -96,10 +96,19 @@ export async function initAuth() {
   const redirectOpts = isNative
     ? { navigateToLoginRequestUrl: false }
     : undefined;
-  const response = await msalInstance.handleRedirectPromise(redirectOpts);
-  if (response) {
-    currentAccount = response.account;
-  } else {
+
+  try {
+    const response = await msalInstance.handleRedirectPromise(redirectOpts);
+    if (response) {
+      currentAccount = response.account;
+    }
+  } catch (err) {
+    console.error('MSAL handleRedirectPromise failed:', err);
+  }
+
+  // Fallback: check for a cached session even if the redirect handling
+  // returned nothing or threw an error.
+  if (!currentAccount) {
     const accounts = msalInstance.getAllAccounts();
     if (accounts.length > 0) {
       currentAccount = accounts[0];
