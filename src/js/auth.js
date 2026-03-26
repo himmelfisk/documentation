@@ -50,15 +50,15 @@ if (isNative) {
 
   sessionStorage.setItem = function (key, value) {
     _setItem(key, value);
-    if (typeof key === 'string' && key.startsWith('msal')) {
-      localStorage.setItem(key, value);
+    if (key.startsWith('msal')) {
+      try { localStorage.setItem(key, value); } catch (_) { /* quota exceeded */ }
     }
   };
 
   sessionStorage.removeItem = function (key) {
     _removeItem(key);
-    if (typeof key === 'string' && key.startsWith('msal')) {
-      localStorage.removeItem(key);
+    if (key.startsWith('msal')) {
+      try { localStorage.removeItem(key); } catch (_) { /* ignore */ }
     }
   };
 }
