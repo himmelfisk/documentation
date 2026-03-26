@@ -2,5 +2,10 @@
   "app.title": "Documentation",
   "app.welcome": "Welcome to the Documentation app.",
   "photo.addButton": "📷 Submit Documentation",
-  "photo.altText": "Captured photo"
+  "photo.altText": "Captured photo",
+  "login.title": "Sign In",
+  "login.prompt": "Sign in with your Microsoft account to continue.",
+  "login.button": "🔐 Sign in with Microsoft",
+  "login.error": "Sign-in failed. Please try again.",
+  "login.logout": "Sign out"
 }
