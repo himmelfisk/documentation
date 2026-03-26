@@ -57,7 +57,12 @@ public class MainActivity extends BridgeActivity {
                         && "https".equals(url.getScheme())) {
                     // Re-load through the standard Capacitor asset-serving path.
                     // view.post() avoids re-entrancy from within this callback.
-                    view.post(() -> view.loadUrl(url.toString()));
+                    final String fullUrl = url.toString();
+                    view.post(() -> {
+                        if (view.isAttachedToWindow()) {
+                            view.loadUrl(fullUrl);
+                        }
+                    });
                     return true;
                 }
                 return super.shouldOverrideUrlLoading(view, request);
