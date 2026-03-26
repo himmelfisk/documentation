@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "echo 'No build step configured yet'",
+    "build": "esbuild src/js/app.js --bundle --format=esm --outfile=www/js/app.js",
     "cap:sync": "cap sync",
     "cap:sync:android": "cap sync android",
     "cap:sync:ios": "cap sync ios",
@@ -30,6 +30,7 @@
     "@capacitor/ios": "^8.3.0"
   },
   "devDependencies": {
-    "@capacitor/cli": "^8.3.0"
+    "@capacitor/cli": "^8.3.0",
+    "esbuild": "^0.25.2"
   }
 }
