@@ -12731,10 +12731,10 @@
     return platformAuthProvider;
   }
   function isDomEnabledForPlatformAuth() {
-    let sessionStorage;
+    let sessionStorage2;
     try {
-      sessionStorage = window[BrowserCacheLocation.SessionStorage];
-      return sessionStorage?.getItem(PLATFORM_AUTH_DOM_SUPPORT) === "true";
+      sessionStorage2 = window[BrowserCacheLocation.SessionStorage];
+      return sessionStorage2?.getItem(PLATFORM_AUTH_DOM_SUPPORT) === "true";
     } catch (e) {
       return false;
     }
@@ -15114,13 +15114,13 @@
         constructor(config) {
           this.browserEnvironment = typeof window !== "undefined";
           this.config = buildConfiguration(config, this.browserEnvironment);
-          let sessionStorage;
+          let sessionStorage2;
           try {
-            sessionStorage = window[BrowserCacheLocation.SessionStorage];
+            sessionStorage2 = window[BrowserCacheLocation.SessionStorage];
           } catch (e) {
           }
-          const logLevelKey = sessionStorage?.getItem(LOG_LEVEL_CACHE_KEY);
-          const piiLoggingKey = sessionStorage?.getItem(LOG_PII_CACHE_KEY)?.toLowerCase();
+          const logLevelKey = sessionStorage2?.getItem(LOG_LEVEL_CACHE_KEY);
+          const piiLoggingKey = sessionStorage2?.getItem(LOG_PII_CACHE_KEY)?.toLowerCase();
           const piiLoggingEnabled = piiLoggingKey === "true" ? true : piiLoggingKey === "false" ? false : void 0;
           const loggerOptions = { ...this.config.system.loggerOptions };
           const logLevel = logLevelKey && Object.keys(LogLevel).includes(logLevelKey) ? LogLevel[logLevelKey] : void 0;
@@ -15492,7 +15492,8 @@
   async function initAuth() {
     msalInstance = new PublicClientApplication(msalConfig);
     await msalInstance.initialize();
-    const response = await msalInstance.handleRedirectPromise();
+    const redirectOpts = isNative ? { navigateToLoginRequestUrl: false } : void 0;
+    const response = await msalInstance.handleRedirectPromise(redirectOpts);
     if (response) {
       currentAccount = response.account;
     } else {
@@ -15526,6 +15527,28 @@
       init_dist2();
       init_dist();
       isNative = Capacitor.isNativePlatform();
+      if (isNative) {
+        const _setItem = sessionStorage.setItem.bind(sessionStorage);
+        const _removeItem = sessionStorage.removeItem.bind(sessionStorage);
+        sessionStorage.setItem = function(key, value) {
+          _setItem(key, value);
+          if (key.startsWith("msal")) {
+            try {
+              localStorage.setItem(key, value);
+            } catch (_) {
+            }
+          }
+        };
+        sessionStorage.removeItem = function(key) {
+          _removeItem(key);
+          if (key.startsWith("msal")) {
+            try {
+              localStorage.removeItem(key);
+            } catch (_) {
+            }
+          }
+        };
+      }
       msalConfig = {
         auth: {
           clientId: "65702384-9248-47a3-80d9-bcf5abb69424",
