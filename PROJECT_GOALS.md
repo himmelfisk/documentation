@@ -172,7 +172,7 @@ The items below are ordered roughly by priority. Each milestone should result in
 a working, testable increment.
 
 - [x] **M1 — Project scaffold** — Capacitor app with camera capture.
-- [ ] **M2 — Microsoft authentication** — MSAL login gate; no UI until
+- [x] **M2 — Microsoft authentication** — MSAL login gate; no UI until
       authenticated. On login, resolve the user's company (via Entra tenant ID)
       and set it as the active context for all subsequent operations.
 - [ ] **M3 — Geolocation capture** — Attach GPS coordinates to each photo.
