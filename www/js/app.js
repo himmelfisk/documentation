@@ -15508,8 +15508,7 @@
       init_dist2();
       msalConfig = {
         auth: {
-          clientId: "YOUR_CLIENT_ID",
-          // TODO: replace with real Azure AD app client ID
+          clientId: "65702384-9248-47a3-80d9-bcf5abb69424",
           authority: "https://login.microsoftonline.com/common",
           redirectUri: window.location.origin
         },
