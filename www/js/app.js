@@ -15493,10 +15493,15 @@
     msalInstance = new PublicClientApplication(msalConfig);
     await msalInstance.initialize();
     const redirectOpts = isNative ? { navigateToLoginRequestUrl: false } : void 0;
-    const response = await msalInstance.handleRedirectPromise(redirectOpts);
-    if (response) {
-      currentAccount = response.account;
-    } else {
+    try {
+      const response = await msalInstance.handleRedirectPromise(redirectOpts);
+      if (response) {
+        currentAccount = response.account;
+      }
+    } catch (err) {
+      console.error("MSAL handleRedirectPromise failed:", err);
+    }
+    if (!currentAccount) {
       const accounts = msalInstance.getAllAccounts();
       if (accounts.length > 0) {
         currentAccount = accounts[0];
