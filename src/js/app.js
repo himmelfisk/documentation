@@ -1,7 +1,10 @@
 import { Capacitor } from '@capacitor/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { initI18n } from './i18n.js';
 
 function init() {
+  initI18n();
+
   const platform = Capacitor.getPlatform();
   console.log(`Running on platform: ${platform}`);
 
