@@ -1,34 +1,26 @@
 package com.himmelfisk.documentation;
 
-import android.net.Uri;
-import android.webkit.WebResourceRequest;
-import android.webkit.WebView;
 import com.getcapacitor.BridgeActivity;
-import com.getcapacitor.BridgeWebViewClient;
 
 public class MainActivity extends BridgeActivity {
-
-    @Override
-    public void load() {
-        super.load();
-
-        // After navigating to an external identity-provider page (e.g.
-        // login.microsoftonline.com) the redirect back to https://localhost
-        // can fail with ERR_CONNECTION_REFUSED because the WebView bypasses
-        // Capacitor's shouldInterceptRequest for the main-frame redirect.
-        // Intercept the navigation and use loadUrl() which follows the
-        // normal Capacitor asset-serving path.
-        getBridge().setWebViewClient(new BridgeWebViewClient(getBridge()) {
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                Uri url = request.getUrl();
-                if ("localhost".equals(url.getHost()) && "https".equals(url.getScheme())) {
-                    String urlStr = url.toString();
-                    view.post(() -> view.loadUrl(urlStr));
-                    return true;
-                }
-                return super.shouldOverrideUrlLoading(view, request);
-            }
-        });
-    }
+    /*
+     * No custom shouldOverrideUrlLoading needed.
+     *
+     * Capacitor's default BridgeWebViewClient already handles the redirect
+     * from the Microsoft identity provider back to https://localhost:
+     *
+     *   1. shouldOverrideUrlLoading → launchIntent() returns false for
+     *      localhost (same-origin), so the WebView handles the navigation.
+     *   2. shouldInterceptRequest → WebViewLocalServer serves the local
+     *      index.html from the app assets.
+     *   3. The URL hash fragment (#code=…&state=…) is preserved in
+     *      window.location.hash, allowing MSAL's handleRedirectPromise()
+     *      to complete the authentication flow.
+     *
+     * A previous override intercepted localhost URLs and called
+     * view.loadUrl(), but WebResourceRequest.getUrl() strips the hash
+     * fragment, which contains the MSAL auth response.  This caused
+     * handleRedirectPromise() to return null and the login screen to
+     * reappear after a successful sign-in.
+     */
 }
