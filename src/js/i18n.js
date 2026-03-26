@@ -11,7 +11,7 @@ import no from '../locales/no.json';
  */
 
 const locales = { en, no };
-const DEFAULT_LOCALE = 'en';
+const DEFAULT_LOCALE = 'no';
 const STORAGE_KEY = 'app_locale';
 
 let current = DEFAULT_LOCALE;
