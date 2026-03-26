@@ -22,22 +22,44 @@ capacitor.config.json
 
 ## Getting Started
 
-```bash
-# Install dependencies
-npm install
+1. **Clone the repository**
 
-# Sync web assets to native projects
-npx cap sync
+   ```bash
+   git clone https://github.com/himmelfisk/documentation.git
+   cd documentation
+   ```
 
-# Open in Android Studio
-npx cap open android
+2. **Install dependencies**
 
-# Open in Xcode
-npx cap open ios
-```
+   ```bash
+   npm install
+   ```
+
+3. **Sync web assets to native projects**
+
+   ```bash
+   npx cap sync
+   ```
+
+4. **Open and run in your IDE**
+
+   For **Android** — open the project in Android Studio, then build & run:
+
+   ```bash
+   npx cap open android
+   ```
+
+   For **iOS** (macOS only) — open the project in Xcode, then build & run:
+
+   ```bash
+   npx cap open ios
+   ```
+
+   After the IDE opens, use its built-in **Run** button to build the app and
+   launch it on an emulator or connected device.
 
 ## Development Workflow
 
-1. Make changes to files in the `www/` directory.
+1. Edit files in the `www/` directory.
 2. Run `npx cap sync` to copy web assets into the native projects.
-3. Build and run from Android Studio or Xcode.
+3. Build and run again from Android Studio or Xcode.
