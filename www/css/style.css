@@ -39,3 +39,33 @@ p {
   font-size: 1rem;
   line-height: 1.6;
 }
+
+#photo-section {
+  margin-top: 32px;
+}
+
+#take-photo-btn {
+  display: inline-block;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-family: inherit;
+  color: #ffffff;
+  background-color: #007aff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#take-photo-btn:active {
+  background-color: #005ecb;
+}
+
+#photo-preview {
+  margin-top: 20px;
+}
+
+#photo-image {
+  max-width: 100%;
+  border-radius: 8px;
+}
