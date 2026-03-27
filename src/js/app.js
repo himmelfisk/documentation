@@ -16,10 +16,13 @@ function showApp(account) {
   document.getElementById('login-screen').hidden = true;
   document.getElementById('app').hidden = false;
 
+  const name = (account && (account.name || account.username)) || '';
+
   const userName = document.getElementById('user-name');
-  if (userName && account) {
-    userName.textContent = account.name || account.username || '';
-  }
+  if (userName) userName.textContent = name;
+
+  const greetingName = document.getElementById('greeting-name');
+  if (greetingName) greetingName.textContent = name;
 }
 
 function showLoginError(err) {

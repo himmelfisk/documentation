@@ -799,6 +799,7 @@
       en_default = {
         "app.title": "Documentation",
         "app.welcome": "Welcome to the Documentation app.",
+        "app.greeting": "Hi",
         "photo.addButton": "\u{1F4F7} Submit Documentation",
         "photo.altText": "Captured photo",
         "login.title": "Sign In",
@@ -816,6 +817,7 @@
       no_default = {
         "app.title": "Dokumentasjon",
         "app.welcome": "Velkommen til Dokumentasjon-appen.",
+        "app.greeting": "Hei",
         "photo.addButton": "\u{1F4F7} Send inn dokumentasjon",
         "photo.altText": "Tatt bilde",
         "login.title": "Logg inn",
@@ -15571,10 +15573,11 @@
       function showApp(account) {
         document.getElementById("login-screen").hidden = true;
         document.getElementById("app").hidden = false;
+        const name3 = account && (account.name || account.username) || "";
         const userName = document.getElementById("user-name");
-        if (userName && account) {
-          userName.textContent = account.name || account.username || "";
-        }
+        if (userName) userName.textContent = name3;
+        const greetingName = document.getElementById("greeting-name");
+        if (greetingName) greetingName.textContent = name3;
       }
       function showLoginError(err) {
         const el = document.getElementById("login-error");

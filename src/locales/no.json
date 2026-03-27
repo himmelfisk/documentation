@@ -1,6 +1,7 @@
 {
   "app.title": "Dokumentasjon",
   "app.welcome": "Velkommen til Dokumentasjon-appen.",
+  "app.greeting": "Hei",
   "photo.addButton": "📷 Send inn dokumentasjon",
   "photo.altText": "Tatt bilde",
   "login.title": "Logg inn",
