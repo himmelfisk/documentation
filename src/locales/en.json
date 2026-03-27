@@ -13,5 +13,6 @@
   "metadata.source.exif": "Photo EXIF",
   "metadata.source.device": "Device GPS",
   "metadata.source.none": "Unknown",
+  "metadata.openMap": "📍 Open in Google Maps",
   "metadata.unavailable": "Location data unavailable"
 }

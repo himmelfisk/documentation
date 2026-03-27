@@ -38,9 +38,14 @@ async function init() {
         metadataContainer.hidden = false;
         metadataContainer.textContent = t('metadata.loading');
 
-        const geotag = await collectGeotagData(imageSrc);
-        console.log('Geotag metadata:', geotag);
-        renderMetadata(metadataContainer, geotag);
+        try {
+          const geotag = await collectGeotagData(imageSrc);
+          console.log('Geotag metadata:', geotag);
+          renderMetadata(metadataContainer, geotag);
+        } catch (geoErr) {
+          console.warn('Geotag collection failed:', geoErr);
+          metadataContainer.textContent = t('metadata.unavailable');
+        }
       }
     } catch (err) {
       console.log('Photo cancelled or failed:', err);
@@ -52,6 +57,8 @@ async function init() {
  * Render geotag metadata into the given container element.
  */
 function renderMetadata(container, geotag) {
+  const mapLink = document.getElementById('photo-map-link');
+
   if (geotag.latitude != null && geotag.longitude != null) {
     const lines = [
       `${t('metadata.latitude')}: ${geotag.latitude.toFixed(6)}`,
@@ -66,8 +73,15 @@ function renderMetadata(container, geotag) {
     lines.push(`${t('metadata.capturedAt')}: ${new Date(geotag.capturedAt).toLocaleString()}`);
     lines.push(`${t('metadata.source')}: ${t('metadata.source.' + geotag.source)}`);
     container.textContent = lines.join('\n');
+
+    if (mapLink) {
+      mapLink.href = `https://www.google.com/maps?q=${geotag.latitude},${geotag.longitude}`;
+      mapLink.textContent = t('metadata.openMap');
+      mapLink.hidden = false;
+    }
   } else {
     container.textContent = t('metadata.unavailable');
+    if (mapLink) mapLink.hidden = true;
   }
 }
 

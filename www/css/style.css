@@ -114,3 +114,14 @@ p {
   }
 }
 
+#photo-map-link {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.9rem;
+  color: #007aff;
+  text-decoration: none;
+}
+
+#photo-map-link:active {
+  color: #005ecb;
+}

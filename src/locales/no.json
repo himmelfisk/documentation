@@ -13,5 +13,6 @@
   "metadata.source.exif": "Foto-EXIF",
   "metadata.source.device": "Enhets-GPS",
   "metadata.source.none": "Ukjent",
+  "metadata.openMap": "📍 Åpne i Google Maps",
   "metadata.unavailable": "Posisjonsdata utilgjengelig"
 }
