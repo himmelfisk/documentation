@@ -68,6 +68,8 @@ export async function getDevicePosition() {
  * @returns {Promise<{latitude: number|null, longitude: number|null, altitude: number|null, accuracy: number|null, timestamp: string, source: 'exif'|'device'|'none'}>}
  */
 export async function collectGeotagData(imageUri) {
+  // Run both in parallel: GPS acquisition can take several seconds, so
+  // starting it while EXIF is being parsed gives better perceived latency.
   const [exif, device] = await Promise.all([
     extractExifGeodata(imageUri),
     getDevicePosition(),
@@ -80,8 +82,8 @@ export async function collectGeotagData(imageUri) {
     return {
       latitude: exif.latitude,
       longitude: exif.longitude,
-      altitude: exif.altitude ?? device.altitude,
-      accuracy: device.accuracy,
+      altitude: exif.altitude,
+      accuracy: null,
       timestamp: exif.timestamp || device.timestamp || capturedAt,
       source: 'exif',
     };

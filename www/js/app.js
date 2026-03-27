@@ -8944,8 +8944,8 @@
       return {
         latitude: exif.latitude,
         longitude: exif.longitude,
-        altitude: exif.altitude ?? device.altitude,
-        accuracy: device.accuracy,
+        altitude: exif.altitude,
+        accuracy: null,
         timestamp: exif.timestamp || device.timestamp || capturedAt,
         source: "exif"
       };
