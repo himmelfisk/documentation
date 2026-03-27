@@ -119,10 +119,11 @@ Make sure the web assets are up to date first, then use the Gradle wrapper
 inside the `android/` directory:
 
 ```bash
-npm run build                          # bundle JS
-npx cap sync android                   # copy web assets into the Android project
-cd android && ./gradlew assembleDebug  # build the debug APK
-cd ..                                  # return to the project root
+npm run build              # bundle JS
+npx cap sync android       # copy web assets into the Android project
+cd android
+./gradlew assembleDebug    # build the debug APK
+cd ..                      # return to the project root
 ```
 
 > **Windows:** use `gradlew.bat assembleDebug` instead of `./gradlew`.
