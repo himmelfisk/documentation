@@ -19,9 +19,8 @@ import { Capacitor } from '@capacitor/core';
 /**
  * Azure AD app-registration client ID.
  *
- * Replace this placeholder with the real Application (client) ID from your
- * Azure AD app registration before deploying.  In an SPA the client ID is
- * public (no secret), so embedding it in the bundle is the standard approach.
+ * In an SPA the client ID is public (no secret), so embedding it in the
+ * bundle is the standard approach.
  *
  * @see https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app
  */

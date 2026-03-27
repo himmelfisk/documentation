@@ -15511,7 +15511,7 @@
     "src/js/auth.js"() {
       init_dist2();
       init_dist();
-      CLIENT_ID2 = "YOUR_CLIENT_ID";
+      CLIENT_ID2 = "65702384-9248-47a3-80d9-bcf5abb69424";
       AUTHORITY = "https://login.microsoftonline.com/common";
       msalConfig = {
         auth: {
