@@ -74,6 +74,20 @@ export async function initAuth() {
   msalInstance = new PublicClientApplication(msalConfig);
   await msalInstance.initialize();
 
+  // On Android the MSAL redirect to https://localhost may fail because the
+  // WebView bypasses Capacitor's local-asset server.  The native fallback in
+  // MainActivity saves the hash fragment (#code=…) to localStorage before
+  // reloading.  Restore it so handleRedirectPromise() can process the token.
+  if (Capacitor.getPlatform() === 'android') {
+    const savedHash = localStorage.getItem('__msal_hash');
+    const savedTs = Number(localStorage.getItem('__msal_hash_ts') || '0');
+    localStorage.removeItem('__msal_hash');
+    localStorage.removeItem('__msal_hash_ts');
+    if (savedHash && Date.now() - savedTs < 120_000) {
+      window.location.hash = savedHash;
+    }
+  }
+
   // Process the redirect response (no-op if we didn't just come back from one).
   const response = await msalInstance.handleRedirectPromise();
 
