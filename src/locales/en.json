@@ -15,7 +15,7 @@
   "metadata.source.device": "Device GPS",
   "metadata.source.none": "Unknown",
   "metadata.openMap": "📍 Open in Google Maps",
-  "metadata.unavailable": "Location data unavailable"
+  "metadata.unavailable": "Location data unavailable",
   "login.title": "Sign In",
   "login.subtitle": "Sign in with your Microsoft account to continue.",
   "login.button": "Sign in with Microsoft",

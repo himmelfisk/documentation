@@ -15,7 +15,7 @@
   "metadata.source.device": "Enhets-GPS",
   "metadata.source.none": "Ukjent",
   "metadata.openMap": "📍 Åpne i Google Maps",
-  "metadata.unavailable": "Posisjonsdata utilgjengelig"
+  "metadata.unavailable": "Posisjonsdata utilgjengelig",
   "login.title": "Logg inn",
   "login.subtitle": "Logg inn med din Microsoft-konto for å fortsette.",
   "login.button": "Logg inn med Microsoft",

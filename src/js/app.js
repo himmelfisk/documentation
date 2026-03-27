@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { initAuth, login, logout } from './auth.js';
 import { initI18n, t } from './i18n.js';
 import { collectGeotagData } from './geotag.js';
 
@@ -73,28 +74,57 @@ async function init() {
           photoImage.src = imageSrc;
           photoImage.hidden = false;
         }
+
+        // Extract geotag metadata from the photo
+        if (metadataContainer && imageSrc) {
+          metadataContainer.hidden = false;
+          metadataContainer.textContent = t('metadata.loading');
+
+          try {
+            const geotag = await collectGeotagData(imageSrc);
+            console.log('Geotag metadata:', geotag);
+            renderMetadata(metadataContainer, geotag);
+          } catch (geoErr) {
+            console.warn('Geotag collection failed:', geoErr);
+            metadataContainer.textContent = t('metadata.unavailable');
+          }
+        }
       } catch (err) {
         console.log('Photo cancelled or failed:', err);
       }
+    });
+  }
+}
 
-      // Extract geotag metadata from the photo
-      if (metadataContainer && imageSrc) {
-        metadataContainer.hidden = false;
-        metadataContainer.textContent = t('metadata.loading');
+/**
+ * Show the main app UI and populate user info.
+ */
+function showApp(account) {
+  document.getElementById('login-screen').hidden = true;
+  document.getElementById('app').hidden = false;
+  const userName = document.getElementById('user-name');
+  const greetingName = document.getElementById('greeting-name');
+  if (userName) userName.textContent = account.name || account.username;
+  if (greetingName) greetingName.textContent = account.name || account.username;
+}
 
-        try {
-          const geotag = await collectGeotagData(imageSrc);
-          console.log('Geotag metadata:', geotag);
-          renderMetadata(metadataContainer, geotag);
-        } catch (geoErr) {
-          console.warn('Geotag collection failed:', geoErr);
-          metadataContainer.textContent = t('metadata.unavailable');
-        }
-      }
-    } catch (err) {
-      console.log('Photo cancelled or failed:', err);
-    }
-  });
+/**
+ * Show the login screen and hide the main app.
+ */
+function showLogin() {
+  document.getElementById('login-screen').hidden = false;
+  document.getElementById('app').hidden = true;
+}
+
+/**
+ * Display a login error message to the user.
+ */
+function showLoginError(err) {
+  const el = document.getElementById('login-error');
+  if (el) {
+    el.textContent = err.message || String(err);
+    el.hidden = false;
+  }
 }
 
 /**
