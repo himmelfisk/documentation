@@ -123,9 +123,14 @@ npm run build              # bundle JS
 npx cap sync android       # copy web assets into the Android project
 cd android
 ./gradlew assembleDebug    # build the debug APK
+cd ..                      # return to the project root
 ```
 
 > **Windows:** use `gradlew.bat assembleDebug` instead of `./gradlew`.
+>
+> **Important:** Always run `npx cap` commands from the project root directory
+> (where `capacitor.config.json` lives). Running them from inside the
+> `android/` folder will fail with *"android platform has not been added yet"*.
 
 The APK will be written to:
 
