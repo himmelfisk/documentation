@@ -108,6 +108,56 @@ npx --version
 
 ---
 
+## Building a Debug APK
+
+You can build a debug `.apk` file and install it directly on your Android
+phone for testing — no Play Store needed.
+
+### Option A — Command line (no Android Studio UI required)
+
+Make sure the web assets are up to date first, then use the Gradle wrapper
+inside the `android/` directory:
+
+```bash
+npm run build              # bundle JS
+npx cap sync android       # copy web assets into the Android project
+cd android
+./gradlew assembleDebug    # build the debug APK
+```
+
+> **Windows:** use `gradlew.bat assembleDebug` instead of `./gradlew`.
+
+The APK will be written to:
+
+```
+android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+### Option B — Android Studio
+
+1. Open the project in Android Studio (`npx cap open android`).
+2. Go to **Build → Build Bundle(s) / APK(s) → Build APK(s)**.
+3. When the build finishes, click the **locate** link in the notification
+   banner to find the APK file.
+
+### Installing the APK on your phone
+
+1. **Enable "Install unknown apps"** — On your phone, go to
+   **Settings → Apps → Special app access → Install unknown apps** and allow
+   your file manager (or the browser you'll use to transfer the file).
+2. **Transfer the APK** — Copy `app-debug.apk` to your phone via USB, email
+   it to yourself, upload it to a cloud drive, or use `adb`:
+   ```bash
+   adb install android/app/build/outputs/apk/debug/app-debug.apk
+   ```
+3. **Open the app** — Find *Documentation* in your app drawer and launch it.
+
+> **Note:** A debug APK is signed with a default debug key and is intended for
+> testing only. For a release build suitable for the Play Store, see
+> [Publishing to Google Play Store](#publishing-to-google-play-store).
+
+---
+
 ## Installing on Android
 
 1. **Install prerequisites** – Install [Node.js](https://nodejs.org/) (v18+) and [Android Studio](https://developer.android.com/studio) with the Android SDK.
