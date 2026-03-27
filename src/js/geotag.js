@@ -65,7 +65,8 @@ function parseGpsFromCameraExif(cameraExif) {
   const result = { latitude: null, longitude: null, altitude: null, capturedAt: null };
   if (!cameraExif || typeof cameraExif !== 'object') return result;
 
-  // iOS: GPS data nested under a "GPS" key
+  // iOS returns GPS data under a "{GPS}" key (mapped to "GPS" in JSON).
+  // Check lowercase too in case a future platform variant uses it.
   const gps = cameraExif.GPS || cameraExif.gps;
   if (gps && typeof gps === 'object') {
     if (gps.Latitude != null && gps.Longitude != null) {
@@ -80,7 +81,7 @@ function parseGpsFromCameraExif(cameraExif) {
     }
     if (gps.Altitude != null) {
       const alt = Number(gps.Altitude);
-      if (isFinite(alt)) result.altitude = gps.AltitudeRef === 1 ? -alt : alt;
+      if (isFinite(alt)) result.altitude = (gps.AltitudeRef === 1 || gps.AltitudeRef === '1') ? -alt : alt;
     }
   }
 

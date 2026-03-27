@@ -23633,7 +23633,7 @@
       }
       if (gps.Altitude != null) {
         const alt = Number(gps.Altitude);
-        if (isFinite(alt)) result.altitude = gps.AltitudeRef === 1 ? -alt : alt;
+        if (isFinite(alt)) result.altitude = gps.AltitudeRef === 1 || gps.AltitudeRef === "1" ? -alt : alt;
       }
     }
     if (result.latitude == null && cameraExif.GPSLatitude && cameraExif.GPSLongitude) {
