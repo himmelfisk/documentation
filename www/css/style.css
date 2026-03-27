@@ -247,3 +247,12 @@ p {
 #photo-map-link:active {
   color: #005ecb;
 }
+
+@media (prefers-color-scheme: dark) {
+  #photo-map-link {
+    color: #64d2ff;
+  }
+  #photo-map-link:active {
+    color: #40a9ff;
+  }
+}
