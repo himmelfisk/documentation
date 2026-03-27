@@ -23874,8 +23874,7 @@
         if (takePhotoBtn) {
           takePhotoBtn.addEventListener("click", async () => {
             try {
-              ensureGeolocationPermission().catch(() => {
-              });
+              await ensureGeolocationPermission();
               const photo = await Camera2.getPhoto({
                 resultType: CameraResultType.Uri,
                 source: CameraSource.Prompt,
