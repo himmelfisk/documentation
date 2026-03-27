@@ -24,7 +24,6 @@
   },
   "homepage": "https://github.com/himmelfisk/documentation#readme",
   "dependencies": {
-    "@azure/msal-browser": "^5.6.1",
     "@capacitor/android": "^8.3.0",
     "@capacitor/camera": "^8.0.2",
     "@capacitor/core": "^8.3.0",

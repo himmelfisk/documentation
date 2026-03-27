@@ -2,10 +2,5 @@
   "app.title": "Dokumentasjon",
   "app.welcome": "Velkommen til Dokumentasjon-appen.",
   "photo.addButton": "📷 Send inn dokumentasjon",
-  "photo.altText": "Tatt bilde",
-  "login.title": "Logg inn",
-  "login.prompt": "Logg inn med Microsoft-kontoen din for å fortsette.",
-  "login.button": "🔐 Logg inn med Microsoft",
-  "login.error": "Innlogging feilet. Prøv igjen.",
-  "login.logout": "Logg ut"
+  "photo.altText": "Tatt bilde"
 }
