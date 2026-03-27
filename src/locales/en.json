@@ -1,6 +1,7 @@
 {
   "app.title": "Documentation",
   "app.welcome": "Welcome to the Documentation app.",
+  "app.greeting": "Hi",
   "photo.addButton": "📷 Submit Documentation",
   "photo.altText": "Captured photo",
   "login.title": "Sign In",
