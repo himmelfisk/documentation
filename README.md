@@ -2,6 +2,9 @@
 
 A cross-platform mobile app built with [Capacitor](https://capacitorjs.com/), targeting Android and iOS via a webview.
 
+> **📋 For the full project vision, architecture, and milestones see
+> [PROJECT_GOALS.md](PROJECT_GOALS.md).**
+
 ## Project Structure
 
 ```
@@ -16,29 +19,86 @@ capacitor.config.json
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) (v18+)
+- [Node.js](https://nodejs.org/) (v18+) — includes **npm** and **npx**
 - For Android: [Android Studio](https://developer.android.com/studio)
 - For iOS: [Xcode](https://developer.apple.com/xcode/) (macOS only)
 
-## Getting Started
+### Installing Node.js, npm, and npx
+
+npm and npx are bundled with Node.js, so installing Node.js gives you all three.
+
+**macOS** (using [Homebrew](https://brew.sh/)):
 
 ```bash
-# Install dependencies
-npm install
-
-# Sync web assets to native projects
-npx cap sync
-
-# Open in Android Studio
-npx cap open android
-
-# Open in Xcode
-npx cap open ios
+brew install node
 ```
+
+**Windows** (using [Chocolatey](https://chocolatey.org/)):
+
+```bash
+choco install nodejs
+```
+
+**Linux (Debian/Ubuntu)**:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y nodejs npm
+```
+
+> If your distribution's default Node.js version is too old, follow the
+> [NodeSource installation instructions](https://github.com/nodesource/distributions#installation-instructions)
+> to get a newer release.
+
+**Verify the installation**:
+
+```bash
+node --version
+npm --version
+npx --version
+```
+
+## Getting Started
+
+1. **Clone the repository**
+
+   ```bash
+   git clone https://github.com/himmelfisk/documentation.git
+   cd documentation
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   npm install
+   ```
+
+3. **Sync web assets to native projects**
+
+   ```bash
+   npx cap sync
+   ```
+
+4. **Open and run in your IDE**
+
+   For **Android** — open the project in Android Studio, then build & run:
+
+   ```bash
+   npx cap open android
+   ```
+
+   For **iOS** (macOS only) — open the project in Xcode, then build & run:
+
+   ```bash
+   npx cap open ios
+   ```
+
+   After the IDE opens, use its built-in **Run** button to build the app and
+   launch it on an emulator or connected device.
 
 ## Development Workflow
 
-1. Make changes to files in the `www/` directory.
+1. Edit files in the `www/` directory.
 2. Run `npx cap sync` to copy web assets into the native projects.
 3. Build and run from Android Studio or Xcode.
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="no">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -8,10 +8,36 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <div id="app">
-    <h1>Documentation</h1>
-    <p>Welcome to the Documentation app.</p>
+  <div id="language-bar">
+    <select id="language-selector">
+      <option value="en">English</option>
+      <option value="no">Norsk</option>
+    </select>
   </div>
-  <script src="js/app.js" type="module"></script>
+
+  <div id="login-screen">
+    <h1 data-i18n="login.title">Logg inn</h1>
+    <p data-i18n="login.prompt">Logg inn med Microsoft-kontoen din for å fortsette.</p>
+    <button id="login-btn" data-i18n="login.button">🔐 Logg inn med Microsoft</button>
+    <p id="login-error" class="error-text" hidden data-i18n="login.error">Innlogging feilet. Prøv igjen.</p>
+  </div>
+
+  <div id="app" hidden>
+    <div id="user-bar">
+      <span id="user-display-name"></span>
+      <button id="logout-btn" data-i18n="login.logout">Logg ut</button>
+    </div>
+
+    <h1 data-i18n="app.title">Dokumentasjon</h1>
+    <p data-i18n="app.welcome">Velkommen til Dokumentasjon-appen.</p>
+
+    <div id="photo-section">
+      <button id="take-photo-btn" data-i18n="photo.addButton">📷 Send inn dokumentasjon</button>
+      <div id="photo-preview">
+        <img id="photo-image" alt="Captured photo" data-i18n="photo.altText" data-i18n-attr="alt" hidden>
+      </div>
+    </div>
+  </div>
+  <script src="js/app.js"></script>
 </body>
 </html>
