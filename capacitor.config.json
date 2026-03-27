@@ -1,12 +1,5 @@
 {
   "appId": "com.himmelfisk.documentation",
   "appName": "Documentation",
-  "webDir": "www",
-  "server": {
-    "allowNavigation": [
-      "login.microsoftonline.com",
-      "login.microsoft.com",
-      "login.live.com"
-    ]
-  }
+  "webDir": "www"
 }
