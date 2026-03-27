@@ -100,8 +100,10 @@ async function init() {
  * Show the main app UI and populate user info.
  */
 function showApp(account) {
-  document.getElementById('login-screen').hidden = true;
-  document.getElementById('app').hidden = false;
+  const loginScreen = document.getElementById('login-screen');
+  const app = document.getElementById('app');
+  if (loginScreen) loginScreen.hidden = true;
+  if (app) app.hidden = false;
   const userName = document.getElementById('user-name');
   const greetingName = document.getElementById('greeting-name');
   if (userName) userName.textContent = account.name || account.username;
@@ -112,8 +114,10 @@ function showApp(account) {
  * Show the login screen and hide the main app.
  */
 function showLogin() {
-  document.getElementById('login-screen').hidden = false;
-  document.getElementById('app').hidden = true;
+  const loginScreen = document.getElementById('login-screen');
+  const app = document.getElementById('app');
+  if (loginScreen) loginScreen.hidden = false;
+  if (app) app.hidden = true;
 }
 
 /**
@@ -136,20 +140,30 @@ function renderMetadata(container, geotag) {
   const lines = [];
 
   // --- GPS / location section ---
-  if (geotag.latitude != null && geotag.longitude != null) {
-    lines.push(`${t('metadata.latitude')}: ${geotag.latitude.toFixed(6)}`);
-    lines.push(`${t('metadata.longitude')}: ${geotag.longitude.toFixed(6)}`);
+  const lat = Number(geotag.latitude);
+  const lng = Number(geotag.longitude);
+
+  if (geotag.latitude != null && geotag.longitude != null && isFinite(lat) && isFinite(lng)) {
+    lines.push(`${t('metadata.latitude')}: ${lat.toFixed(6)}`);
+    lines.push(`${t('metadata.longitude')}: ${lng.toFixed(6)}`);
     if (geotag.altitude != null) {
-      lines.push(`${t('metadata.altitude')}: ${geotag.altitude.toFixed(1)} m`);
+      const alt = Number(geotag.altitude);
+      if (isFinite(alt)) lines.push(`${t('metadata.altitude')}: ${alt.toFixed(1)} m`);
     }
     if (geotag.accuracy != null) {
-      lines.push(`${t('metadata.accuracy')}: ±${geotag.accuracy.toFixed(0)} m`);
+      const acc = Number(geotag.accuracy);
+      if (isFinite(acc)) lines.push(`${t('metadata.accuracy')}: ±${acc.toFixed(0)} m`);
     }
-    lines.push(`${t('metadata.capturedAt')}: ${new Date(geotag.capturedAt).toLocaleString()}`);
+    if (geotag.capturedAt) {
+      const capturedDate = new Date(geotag.capturedAt);
+      if (!isNaN(capturedDate.getTime())) {
+        lines.push(`${t('metadata.capturedAt')}: ${capturedDate.toLocaleString()}`);
+      }
+    }
     lines.push(`${t('metadata.source')}: ${t('metadata.source.' + geotag.source)}`);
 
     if (mapLink) {
-      mapLink.href = `https://www.google.com/maps?q=${geotag.latitude},${geotag.longitude}`;
+      mapLink.href = `https://www.google.com/maps?q=${lat},${lng}`;
       mapLink.textContent = t('metadata.openMap');
       mapLink.hidden = false;
     }
