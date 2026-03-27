@@ -15489,9 +15489,32 @@
         return window.location.origin;
     }
   }
+  function waitForAuthHash(timeoutMs) {
+    return new Promise((resolve) => {
+      if (window.location.hash.includes("code=")) {
+        resolve();
+        return;
+      }
+      const onHash = () => {
+        clearTimeout(timer);
+        resolve();
+      };
+      window.addEventListener("hashchange", onHash, { once: true });
+      const timer = setTimeout(() => {
+        window.removeEventListener("hashchange", onHash);
+        resolve();
+      }, timeoutMs);
+    });
+  }
   async function initAuth() {
     msalInstance = new PublicClientApplication(msalConfig);
     await msalInstance.initialize();
+    if (isNative && localStorage.getItem("__auth_redirect_pending") === "true") {
+      if (!window.location.hash.includes("code=")) {
+        await waitForAuthHash(3e3);
+      }
+      localStorage.removeItem("__auth_redirect_pending");
+    }
     const redirectOpts = isNative ? { navigateToLoginRequestUrl: false } : void 0;
     try {
       const response = await msalInstance.handleRedirectPromise(redirectOpts);
@@ -15511,6 +15534,7 @@
   }
   async function login() {
     if (isNative) {
+      localStorage.setItem("__auth_redirect_pending", "true");
       await msalInstance.loginRedirect(loginRequest);
       return null;
     }

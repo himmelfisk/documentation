@@ -83,12 +83,52 @@ let msalInstance = null;
 let currentAccount = null;
 
 /**
+ * Wait for the auth-response hash fragment to be injected by the native
+ * layer (see MainActivity.java onPageFinished).  Returns as soon as
+ * window.location.hash contains "code=" or after {@link timeoutMs}.
+ */
+function waitForAuthHash(timeoutMs) {
+  return new Promise((resolve) => {
+    if (window.location.hash.includes('code=')) { resolve(); return; }
+
+    const onHash = () => {
+      clearTimeout(timer);
+      resolve();
+    };
+    window.addEventListener('hashchange', onHash, { once: true });
+
+    const timer = setTimeout(() => {
+      window.removeEventListener('hashchange', onHash);
+      resolve();
+    }, timeoutMs);
+  });
+}
+
+/**
  * Initialise MSAL and check for an existing session.
  * @returns {Promise<import('@azure/msal-browser').AccountInfo|null>}
  */
 export async function initAuth() {
   msalInstance = new PublicClientApplication(msalConfig);
   await msalInstance.initialize();
+
+  /*
+   * On native platforms the auth redirect to https://localhost may fail
+   * with ERR_CONNECTION_REFUSED.  The native layer (MainActivity)
+   * captures the hash fragment, reloads the app, and injects the hash
+   * via evaluateJavascript in onPageFinished.
+   *
+   * Because the hash is injected AFTER the page scripts start running
+   * we must wait for it before calling handleRedirectPromise().
+   * We only wait when a redirect is actually pending (flagged by
+   * login() below) to avoid a startup delay on normal launches.
+   */
+  if (isNative && localStorage.getItem('__auth_redirect_pending') === 'true') {
+    if (!window.location.hash.includes('code=')) {
+      await waitForAuthHash(3000);
+    }
+    localStorage.removeItem('__auth_redirect_pending');
+  }
 
   // Handle redirect response (when returning from a redirect-based login).
   // On native platforms, disable navigateToLoginRequestUrl to avoid an
@@ -127,6 +167,9 @@ export async function initAuth() {
  */
 export async function login() {
   if (isNative) {
+    // Flag that a redirect is about to happen so initAuth() knows to
+    // wait for the hash fragment on the next page load.
+    localStorage.setItem('__auth_redirect_pending', 'true');
     await msalInstance.loginRedirect(loginRequest);
     return null;
   }
