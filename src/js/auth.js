@@ -13,6 +13,35 @@ import { PublicClientApplication, InteractionRequiredAuthError } from '@azure/ms
 import { Capacitor } from '@capacitor/core';
 
 // ---------------------------------------------------------------------------
+// Android – mirror MSAL's sessionStorage writes to localStorage
+// ---------------------------------------------------------------------------
+// MSAL v5 stores temporary interaction state (PKCE verifier, request params,
+// interaction status) in sessionStorage even when cacheLocation is
+// 'localStorage'.  Android WebView can lose sessionStorage during
+// cross-origin navigation to the Microsoft login page and back.  The mirror
+// lets MSAL's built-in fallback in getTemporaryCache() find the items in
+// localStorage.
+
+if (Capacitor.getPlatform() === 'android') {
+  const origSet = window.sessionStorage.setItem.bind(window.sessionStorage);
+  const origRemove = window.sessionStorage.removeItem.bind(window.sessionStorage);
+
+  window.sessionStorage.setItem = function (key, value) {
+    origSet(key, value);
+    if (typeof key === 'string' && key.startsWith('msal.')) {
+      window.localStorage.setItem(key, value);
+    }
+  };
+
+  window.sessionStorage.removeItem = function (key) {
+    origRemove(key);
+    if (typeof key === 'string' && key.startsWith('msal.')) {
+      window.localStorage.removeItem(key);
+    }
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Configuration
 // ---------------------------------------------------------------------------
 
