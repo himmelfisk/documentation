@@ -97,4 +97,21 @@ p {
   border-radius: 8px;
 }
 
+#photo-metadata {
+  margin-top: 12px;
+  padding: 12px;
+  font-size: 0.85rem;
+  text-align: left;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  white-space: pre-line;
+  line-height: 1.6;
+}
+
+@media (prefers-color-scheme: dark) {
+  #photo-metadata {
+    background-color: #2a2a2a;
+  }
+}
+
 

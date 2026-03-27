@@ -2,5 +2,13 @@
   "app.title": "Dokumentasjon",
   "app.welcome": "Velkommen til Dokumentasjon-appen.",
   "photo.addButton": "📷 Send inn dokumentasjon",
-  "photo.altText": "Tatt bilde"
+  "photo.altText": "Tatt bilde",
+  "metadata.loading": "Leser posisjonsdata…",
+  "metadata.latitude": "Breddegrad",
+  "metadata.longitude": "Lengdegrad",
+  "metadata.altitude": "Høyde",
+  "metadata.accuracy": "Nøyaktighet",
+  "metadata.timestamp": "Tidsstempel",
+  "metadata.source": "Kilde",
+  "metadata.unavailable": "Posisjonsdata utilgjengelig"
 }

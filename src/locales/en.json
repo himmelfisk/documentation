@@ -2,5 +2,13 @@
   "app.title": "Documentation",
   "app.welcome": "Welcome to the Documentation app.",
   "photo.addButton": "📷 Submit Documentation",
-  "photo.altText": "Captured photo"
+  "photo.altText": "Captured photo",
+  "metadata.loading": "Reading location data…",
+  "metadata.latitude": "Latitude",
+  "metadata.longitude": "Longitude",
+  "metadata.altitude": "Altitude",
+  "metadata.accuracy": "Accuracy",
+  "metadata.timestamp": "Timestamp",
+  "metadata.source": "Source",
+  "metadata.unavailable": "Location data unavailable"
 }
