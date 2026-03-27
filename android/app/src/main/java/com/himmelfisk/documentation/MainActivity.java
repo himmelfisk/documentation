@@ -8,6 +8,8 @@ import android.webkit.WebView;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.BridgeWebViewClient;
 
+import org.json.JSONObject;
+
 public class MainActivity extends BridgeActivity {
 
     /**
@@ -83,6 +85,9 @@ public class MainActivity extends BridgeActivity {
                     // Try to get the fragment from the request URL.
                     // Some WebView versions include it, others strip it.
                     String frag = request.getUrl().getFragment();
+                    // Empty string = "we know a redirect happened but lost the
+                    // hash"; onPageFinished will skip the injection and the JS
+                    // side will fall through to the cached-session check.
                     pendingAuthFragment = (frag != null) ? frag : "";
                     view.post(() -> bridge.reload());
                     return;   // skip super to avoid loading an error page
@@ -101,13 +106,11 @@ public class MainActivity extends BridgeActivity {
                     pendingAuthFragment = null;
 
                     if (!frag.isEmpty()) {
-                        String escaped = frag
-                                .replace("\\", "\\\\")
-                                .replace("'",  "\\'")
-                                .replace("\n", "\\n")
-                                .replace("\r", "\\r");
+                        // Use JSONObject.quote to safely escape the fragment
+                        // for JavaScript injection (prevents XSS via crafted URLs).
+                        String escaped = JSONObject.quote(frag);
                         view.evaluateJavascript(
-                                "window.location.hash='#" + escaped + "';",
+                                "window.location.hash='#'+"+escaped+";",
                                 null);
                     }
                 }
@@ -117,9 +120,11 @@ public class MainActivity extends BridgeActivity {
 
     /** True when the URI looks like an MSAL auth redirect to localhost. */
     private static boolean isLocalhostAuthRedirect(Uri url) {
+        String frag = url.getFragment();
         return "localhost".equals(url.getHost())
                 && "https".equals(url.getScheme())
-                && url.getFragment() != null
-                && url.getFragment().contains("code=");
+                && frag != null
+                && frag.contains("code=")
+                && frag.contains("state=");
     }
 }

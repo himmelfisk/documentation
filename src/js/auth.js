@@ -82,6 +82,9 @@ const loginRequest = {
 let msalInstance = null;
 let currentAccount = null;
 
+/** Max time (ms) to wait for the native layer to inject the auth hash. */
+const AUTH_HASH_TIMEOUT_MS = 3000;
+
 /**
  * Wait for the auth-response hash fragment to be injected by the native
  * layer (see MainActivity.java onPageFinished).  Returns as soon as
@@ -89,7 +92,10 @@ let currentAccount = null;
  */
 function waitForAuthHash(timeoutMs) {
   return new Promise((resolve) => {
-    if (window.location.hash.includes('code=')) { resolve(); return; }
+    if (window.location.hash.includes('code=')) {
+      resolve();
+      return;
+    }
 
     const onHash = () => {
       clearTimeout(timer);
@@ -125,7 +131,7 @@ export async function initAuth() {
    */
   if (isNative && localStorage.getItem('__auth_redirect_pending') === 'true') {
     if (!window.location.hash.includes('code=')) {
-      await waitForAuthHash(3000);
+      await waitForAuthHash(AUTH_HASH_TIMEOUT_MS);
     }
     localStorage.removeItem('__auth_redirect_pending');
   }
