@@ -2,7 +2,7 @@ import { Capacitor } from '@capacitor/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { initAuth, login, logout } from './auth.js';
 import { initI18n, t } from './i18n.js';
-import { collectGeotagData } from './geotag.js';
+import { collectGeotagData, ensureGeolocationPermission } from './geotag.js';
 
 async function init() {
   initI18n();
@@ -63,6 +63,11 @@ async function init() {
   if (takePhotoBtn) {
     takePhotoBtn.addEventListener('click', async () => {
       try {
+        // Request location permission before opening the camera so that:
+        // 1. On iOS, the camera can embed GPS in the photo's EXIF metadata
+        // 2. Device GPS fallback is ready immediately after capture
+        ensureGeolocationPermission().catch(() => {});
+
         const photo = await Camera.getPhoto({
           resultType: CameraResultType.Uri,
           source: CameraSource.Prompt,
@@ -81,7 +86,7 @@ async function init() {
           metadataContainer.textContent = t('metadata.loading');
 
           try {
-            const geotag = await collectGeotagData(imageSrc);
+            const geotag = await collectGeotagData(imageSrc, photo.exif);
             console.log('Geotag metadata:', geotag);
             renderMetadata(metadataContainer, geotag);
           } catch (geoErr) {

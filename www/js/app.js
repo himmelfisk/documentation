@@ -23597,7 +23597,84 @@
     if (isNaN(date.getTime())) return null;
     return date.toISOString();
   }
-  async function extractExifGeodata(imageUri) {
+  function parseExifGpsRational(coord, ref) {
+    if (typeof coord !== "string" || !coord) return null;
+    const parts = coord.split(",").map((p) => {
+      const [num, den] = p.trim().split("/").map(Number);
+      return den ? num / den : NaN;
+    });
+    if (parts.length < 3 || parts.some((n) => isNaN(n))) return null;
+    let decimal = parts[0] + parts[1] / 60 + parts[2] / 3600;
+    if (ref === "S" || ref === "W") decimal = -decimal;
+    return decimal;
+  }
+  function parseExifAltitudeRational(alt, ref) {
+    if (typeof alt !== "string" || !alt) return null;
+    const [num, den] = alt.split("/").map(Number);
+    if (!den || isNaN(num)) return null;
+    let value = num / den;
+    if (ref === "1") value = -value;
+    return value;
+  }
+  function parseGpsFromCameraExif(cameraExif) {
+    const result = { latitude: null, longitude: null, altitude: null, capturedAt: null };
+    if (!cameraExif || typeof cameraExif !== "object") return result;
+    const gps = cameraExif.GPS || cameraExif.gps;
+    if (gps && typeof gps === "object") {
+      if (gps.Latitude != null && gps.Longitude != null) {
+        let lat = Number(gps.Latitude);
+        let lng = Number(gps.Longitude);
+        if (gps.LatitudeRef === "S") lat = -Math.abs(lat);
+        if (gps.LongitudeRef === "W") lng = -Math.abs(lng);
+        if (isFinite(lat) && isFinite(lng)) {
+          result.latitude = lat;
+          result.longitude = lng;
+        }
+      }
+      if (gps.Altitude != null) {
+        const alt = Number(gps.Altitude);
+        if (isFinite(alt)) result.altitude = gps.AltitudeRef === 1 || gps.AltitudeRef === "1" ? -alt : alt;
+      }
+    }
+    if (result.latitude == null && cameraExif.GPSLatitude && cameraExif.GPSLongitude) {
+      const lat = parseExifGpsRational(cameraExif.GPSLatitude, cameraExif.GPSLatitudeRef);
+      const lng = parseExifGpsRational(cameraExif.GPSLongitude, cameraExif.GPSLongitudeRef);
+      if (lat != null && lng != null) {
+        result.latitude = lat;
+        result.longitude = lng;
+      }
+      if (cameraExif.GPSAltitude) {
+        const alt = parseExifAltitudeRational(cameraExif.GPSAltitude, cameraExif.GPSAltitudeRef);
+        if (alt != null) result.altitude = alt;
+      }
+    }
+    const dto = cameraExif.DateTimeOriginal || cameraExif.exif && cameraExif.exif.DateTimeOriginal;
+    if (dto) {
+      const description = typeof dto === "object" ? dto.description : dto;
+      result.capturedAt = normalizeExifTimestamp(String(description));
+    }
+    return result;
+  }
+  function flattenCameraExif(cameraExif) {
+    const flat = {};
+    if (!cameraExif || typeof cameraExif !== "object") return flat;
+    const MAX_LEN = 200;
+    for (const [key, val] of Object.entries(cameraExif)) {
+      if (val == null) continue;
+      if (typeof val === "object") {
+        for (const [subKey, subVal] of Object.entries(val)) {
+          if (subVal == null) continue;
+          const s2 = String(subVal);
+          if (s2.length <= MAX_LEN) flat[`${key}.${subKey}`] = s2;
+        }
+      } else {
+        const s2 = String(val);
+        if (s2.length <= MAX_LEN) flat[key] = s2;
+      }
+    }
+    return flat;
+  }
+  async function extractExifGeodata(imageUri, cameraExif) {
     const result = { latitude: null, longitude: null, altitude: null, capturedAt: null, allTags: {} };
     try {
       const response = await fetch(imageUri);
@@ -23614,6 +23691,22 @@
       result.allTags = flattenExifTags(tags);
     } catch (err) {
       console.warn("EXIF extraction failed:", err);
+    }
+    if (cameraExif) {
+      const cam = parseGpsFromCameraExif(cameraExif);
+      if (result.latitude == null && cam.latitude != null) {
+        result.latitude = cam.latitude;
+        result.longitude = cam.longitude;
+      }
+      if (result.altitude == null && cam.altitude != null) {
+        result.altitude = cam.altitude;
+      }
+      if (!result.capturedAt && cam.capturedAt) {
+        result.capturedAt = cam.capturedAt;
+      }
+      if (Object.keys(result.allTags).length === 0) {
+        result.allTags = flattenCameraExif(cameraExif);
+      }
     }
     return result;
   }
@@ -23681,9 +23774,9 @@
     }
     return result;
   }
-  async function collectGeotagData(imageUri) {
+  async function collectGeotagData(imageUri, cameraExif) {
     const [exif, device] = await Promise.all([
-      extractExifGeodata(imageUri),
+      extractExifGeodata(imageUri, cameraExif),
       getDevicePosition()
     ]);
     const now = (/* @__PURE__ */ new Date()).toISOString();
@@ -23781,6 +23874,8 @@
         if (takePhotoBtn) {
           takePhotoBtn.addEventListener("click", async () => {
             try {
+              ensureGeolocationPermission().catch(() => {
+              });
               const photo = await Camera2.getPhoto({
                 resultType: CameraResultType.Uri,
                 source: CameraSource.Prompt,
@@ -23795,7 +23890,7 @@
                 metadataContainer.hidden = false;
                 metadataContainer.textContent = t("metadata.loading");
                 try {
-                  const geotag = await collectGeotagData(imageSrc);
+                  const geotag = await collectGeotagData(imageSrc, photo.exif);
                   console.log("Geotag metadata:", geotag);
                   renderMetadata(metadataContainer, geotag);
                 } catch (geoErr) {
