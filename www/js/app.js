@@ -15486,6 +15486,15 @@
   async function initAuth() {
     msalInstance = new PublicClientApplication(msalConfig);
     await msalInstance.initialize();
+    if (Capacitor.getPlatform() === "android") {
+      const savedHash = localStorage.getItem("__msal_hash");
+      const savedTs = Number(localStorage.getItem("__msal_hash_ts") || "0");
+      localStorage.removeItem("__msal_hash");
+      localStorage.removeItem("__msal_hash_ts");
+      if (savedHash && Date.now() - savedTs < 12e4) {
+        window.location.hash = savedHash;
+      }
+    }
     const response = await msalInstance.handleRedirectPromise();
     if (response && response.account) {
       msalInstance.setActiveAccount(response.account);
