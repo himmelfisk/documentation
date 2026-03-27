@@ -128,16 +128,17 @@ function showLoginError(err) {
 }
 
 /**
- * Render geotag metadata into the given container element.
+ * Render geotag metadata and all EXIF data into the given container element.
  */
 function renderMetadata(container, geotag) {
   const mapLink = document.getElementById('photo-map-link');
 
+  const lines = [];
+
+  // --- GPS / location section ---
   if (geotag.latitude != null && geotag.longitude != null) {
-    const lines = [
-      `${t('metadata.latitude')}: ${geotag.latitude.toFixed(6)}`,
-      `${t('metadata.longitude')}: ${geotag.longitude.toFixed(6)}`,
-    ];
+    lines.push(`${t('metadata.latitude')}: ${geotag.latitude.toFixed(6)}`);
+    lines.push(`${t('metadata.longitude')}: ${geotag.longitude.toFixed(6)}`);
     if (geotag.altitude != null) {
       lines.push(`${t('metadata.altitude')}: ${geotag.altitude.toFixed(1)} m`);
     }
@@ -146,7 +147,6 @@ function renderMetadata(container, geotag) {
     }
     lines.push(`${t('metadata.capturedAt')}: ${new Date(geotag.capturedAt).toLocaleString()}`);
     lines.push(`${t('metadata.source')}: ${t('metadata.source.' + geotag.source)}`);
-    container.textContent = lines.join('\n');
 
     if (mapLink) {
       mapLink.href = `https://www.google.com/maps?q=${geotag.latitude},${geotag.longitude}`;
@@ -154,9 +154,20 @@ function renderMetadata(container, geotag) {
       mapLink.hidden = false;
     }
   } else {
-    container.textContent = t('metadata.unavailable');
+    lines.push(t('metadata.unavailable'));
     if (mapLink) mapLink.hidden = true;
   }
+
+  // --- All EXIF tags ---
+  if (geotag.allTags && Object.keys(geotag.allTags).length > 0) {
+    lines.push('');
+    lines.push(`── ${t('metadata.exifHeader')} ──`);
+    for (const [key, value] of Object.entries(geotag.allTags)) {
+      lines.push(`${key}: ${value}`);
+    }
+  }
+
+  container.textContent = lines.join('\n');
 }
 
 if (document.readyState === 'loading') {
