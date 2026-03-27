@@ -806,8 +806,11 @@
         "metadata.longitude": "Longitude",
         "metadata.altitude": "Altitude",
         "metadata.accuracy": "Accuracy",
-        "metadata.timestamp": "Timestamp",
+        "metadata.capturedAt": "Captured at",
         "metadata.source": "Source",
+        "metadata.source.exif": "Photo EXIF",
+        "metadata.source.device": "Device GPS",
+        "metadata.source.none": "Unknown",
         "metadata.unavailable": "Location data unavailable"
       };
     }
@@ -827,8 +830,11 @@
         "metadata.longitude": "Lengdegrad",
         "metadata.altitude": "H\xF8yde",
         "metadata.accuracy": "N\xF8yaktighet",
-        "metadata.timestamp": "Tidsstempel",
+        "metadata.capturedAt": "Tatt",
         "metadata.source": "Kilde",
+        "metadata.source.exif": "Foto-EXIF",
+        "metadata.source.device": "Enhets-GPS",
+        "metadata.source.none": "Ukjent",
         "metadata.unavailable": "Posisjonsdata utilgjengelig"
       };
     }
@@ -8898,8 +8904,15 @@
   });
 
   // src/js/geotag.js
+  function normalizeExifTimestamp(exifDateTime) {
+    if (!exifDateTime) return null;
+    const iso = exifDateTime.replace(/^(\d{4}):(\d{2}):(\d{2})/, "$1-$2-$3").replace(" ", "T");
+    const date = new Date(iso);
+    if (isNaN(date.getTime())) return null;
+    return date.toISOString();
+  }
   async function extractExifGeodata(imageUri) {
-    const result = { latitude: null, longitude: null, altitude: null, timestamp: null };
+    const result = { latitude: null, longitude: null, altitude: null, capturedAt: null };
     try {
       const response = await fetch(imageUri);
       const buffer = await response.arrayBuffer();
@@ -8910,16 +8923,32 @@
         if (tags.gps.Altitude != null) result.altitude = tags.gps.Altitude;
       }
       if (tags.exif && tags.exif.DateTimeOriginal) {
-        result.timestamp = tags.exif.DateTimeOriginal.description;
+        result.capturedAt = normalizeExifTimestamp(tags.exif.DateTimeOriginal.description);
       }
     } catch (err) {
       console.warn("EXIF extraction failed:", err);
     }
     return result;
   }
+  async function ensureGeolocationPermission() {
+    let status = await Geolocation2.checkPermissions();
+    if (status.location === "granted" || status.coarseLocation === "granted") {
+      return true;
+    }
+    if (status.location === "denied") {
+      return false;
+    }
+    status = await Geolocation2.requestPermissions({ permissions: ["location"] });
+    return status.location === "granted" || status.coarseLocation === "granted";
+  }
   async function getDevicePosition() {
-    const result = { latitude: null, longitude: null, altitude: null, accuracy: null, timestamp: null };
+    const result = { latitude: null, longitude: null, altitude: null, accuracy: null, capturedAt: null };
     try {
+      const granted = await ensureGeolocationPermission();
+      if (!granted) {
+        console.warn("Geolocation permission not granted");
+        return result;
+      }
       const position = await Geolocation2.getCurrentPosition({
         enableHighAccuracy: true,
         timeout: 1e4
@@ -8928,7 +8957,7 @@
       result.longitude = position.coords.longitude;
       result.altitude = position.coords.altitude;
       result.accuracy = position.coords.accuracy;
-      result.timestamp = new Date(position.timestamp).toISOString();
+      result.capturedAt = new Date(position.timestamp).toISOString();
     } catch (err) {
       console.warn("Device geolocation failed:", err);
     }
@@ -8939,14 +8968,14 @@
       extractExifGeodata(imageUri),
       getDevicePosition()
     ]);
-    const capturedAt = (/* @__PURE__ */ new Date()).toISOString();
+    const now = (/* @__PURE__ */ new Date()).toISOString();
     if (exif.latitude != null && exif.longitude != null) {
       return {
         latitude: exif.latitude,
         longitude: exif.longitude,
         altitude: exif.altitude,
         accuracy: null,
-        timestamp: exif.timestamp || device.timestamp || capturedAt,
+        capturedAt: exif.capturedAt || device.capturedAt || now,
         source: "exif"
       };
     }
@@ -8956,7 +8985,7 @@
         longitude: device.longitude,
         altitude: device.altitude,
         accuracy: device.accuracy,
-        timestamp: device.timestamp || capturedAt,
+        capturedAt: device.capturedAt || now,
         source: "device"
       };
     }
@@ -8965,7 +8994,7 @@
       longitude: null,
       altitude: null,
       accuracy: null,
-      timestamp: capturedAt,
+      capturedAt: now,
       source: "none"
     };
   }
@@ -9030,8 +9059,8 @@
           if (geotag.accuracy != null) {
             lines.push(`${t("metadata.accuracy")}: \xB1${geotag.accuracy.toFixed(0)} m`);
           }
-          lines.push(`${t("metadata.timestamp")}: ${geotag.timestamp}`);
-          lines.push(`${t("metadata.source")}: ${geotag.source}`);
+          lines.push(`${t("metadata.capturedAt")}: ${geotag.capturedAt}`);
+          lines.push(`${t("metadata.source")}: ${t("metadata.source." + geotag.source)}`);
           container.textContent = lines.join("\n");
         } else {
           container.textContent = t("metadata.unavailable");

@@ -8,7 +8,10 @@
   "metadata.longitude": "Lengdegrad",
   "metadata.altitude": "Høyde",
   "metadata.accuracy": "Nøyaktighet",
-  "metadata.timestamp": "Tidsstempel",
+  "metadata.capturedAt": "Tatt",
   "metadata.source": "Kilde",
+  "metadata.source.exif": "Foto-EXIF",
+  "metadata.source.device": "Enhets-GPS",
+  "metadata.source.none": "Ukjent",
   "metadata.unavailable": "Posisjonsdata utilgjengelig"
 }

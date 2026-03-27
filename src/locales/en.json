@@ -8,7 +8,10 @@
   "metadata.longitude": "Longitude",
   "metadata.altitude": "Altitude",
   "metadata.accuracy": "Accuracy",
-  "metadata.timestamp": "Timestamp",
+  "metadata.capturedAt": "Captured at",
   "metadata.source": "Source",
+  "metadata.source.exif": "Photo EXIF",
+  "metadata.source.device": "Device GPS",
+  "metadata.source.none": "Unknown",
   "metadata.unavailable": "Location data unavailable"
 }

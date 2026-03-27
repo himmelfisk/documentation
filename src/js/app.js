@@ -63,8 +63,8 @@ function renderMetadata(container, geotag) {
     if (geotag.accuracy != null) {
       lines.push(`${t('metadata.accuracy')}: ±${geotag.accuracy.toFixed(0)} m`);
     }
-    lines.push(`${t('metadata.timestamp')}: ${geotag.timestamp}`);
-    lines.push(`${t('metadata.source')}: ${geotag.source}`);
+    lines.push(`${t('metadata.capturedAt')}: ${geotag.capturedAt}`);
+    lines.push(`${t('metadata.source')}: ${t('metadata.source.' + geotag.source)}`);
     container.textContent = lines.join('\n');
   } else {
     container.textContent = t('metadata.unavailable');

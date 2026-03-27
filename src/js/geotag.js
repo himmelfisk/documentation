@@ -2,13 +2,29 @@ import ExifReader from 'exifreader';
 import { Geolocation } from '@capacitor/geolocation';
 
 /**
+ * Convert an EXIF DateTimeOriginal string ("YYYY:MM:DD HH:MM:SS") to ISO 8601.
+ * Returns null if the input cannot be parsed.
+ *
+ * @param {string} exifDateTime
+ * @returns {string|null}
+ */
+function normalizeExifTimestamp(exifDateTime) {
+  if (!exifDateTime) return null;
+  // EXIF format: "2024:03:27 16:33:53" → "2024-03-27T16:33:53"
+  const iso = exifDateTime.replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3').replace(' ', 'T');
+  const date = new Date(iso);
+  if (isNaN(date.getTime())) return null;
+  return date.toISOString();
+}
+
+/**
  * Extract GPS coordinates and metadata from a photo's EXIF data.
  *
  * @param {string} imageUri – Web-accessible URI of the captured photo
- * @returns {Promise<{latitude: number|null, longitude: number|null, altitude: number|null, timestamp: string|null}>}
+ * @returns {Promise<{latitude: number|null, longitude: number|null, altitude: number|null, capturedAt: string|null}>}
  */
 export async function extractExifGeodata(imageUri) {
-  const result = { latitude: null, longitude: null, altitude: null, timestamp: null };
+  const result = { latitude: null, longitude: null, altitude: null, capturedAt: null };
 
   try {
     const response = await fetch(imageUri);
@@ -22,7 +38,7 @@ export async function extractExifGeodata(imageUri) {
     }
 
     if (tags.exif && tags.exif.DateTimeOriginal) {
-      result.timestamp = tags.exif.DateTimeOriginal.description;
+      result.capturedAt = normalizeExifTimestamp(tags.exif.DateTimeOriginal.description);
     }
   } catch (err) {
     console.warn('EXIF extraction failed:', err);
@@ -32,14 +48,42 @@ export async function extractExifGeodata(imageUri) {
 }
 
 /**
+ * Ensure the app has geolocation permissions, requesting them if needed.
+ * Returns true when permission is granted, false otherwise.
+ *
+ * @returns {Promise<boolean>}
+ */
+async function ensureGeolocationPermission() {
+  let status = await Geolocation.checkPermissions();
+  if (status.location === 'granted' || status.coarseLocation === 'granted') {
+    return true;
+  }
+
+  if (status.location === 'denied') {
+    // On some platforms 'denied' means permanently denied; requesting again won't help
+    return false;
+  }
+
+  // status is 'prompt' or 'prompt-with-rationale' — request permission
+  status = await Geolocation.requestPermissions({ permissions: ['location'] });
+  return status.location === 'granted' || status.coarseLocation === 'granted';
+}
+
+/**
  * Get the device's current GPS position via Capacitor Geolocation.
  *
- * @returns {Promise<{latitude: number|null, longitude: number|null, altitude: number|null, accuracy: number|null, timestamp: string|null}>}
+ * @returns {Promise<{latitude: number|null, longitude: number|null, altitude: number|null, accuracy: number|null, capturedAt: string|null}>}
  */
 export async function getDevicePosition() {
-  const result = { latitude: null, longitude: null, altitude: null, accuracy: null, timestamp: null };
+  const result = { latitude: null, longitude: null, altitude: null, accuracy: null, capturedAt: null };
 
   try {
+    const granted = await ensureGeolocationPermission();
+    if (!granted) {
+      console.warn('Geolocation permission not granted');
+      return result;
+    }
+
     const position = await Geolocation.getCurrentPosition({
       enableHighAccuracy: true,
       timeout: 10000,
@@ -49,7 +93,7 @@ export async function getDevicePosition() {
     result.longitude = position.coords.longitude;
     result.altitude = position.coords.altitude;
     result.accuracy = position.coords.accuracy;
-    result.timestamp = new Date(position.timestamp).toISOString();
+    result.capturedAt = new Date(position.timestamp).toISOString();
   } catch (err) {
     console.warn('Device geolocation failed:', err);
   }
@@ -62,10 +106,10 @@ export async function getDevicePosition() {
  *
  * Attempts to read GPS from the photo's EXIF data first, then falls back
  * to the device's live GPS position. Returns a flat object suitable for
- * future SQLite storage.
+ * future SQLite storage (field names match the photos table schema).
  *
  * @param {string} imageUri – Web-accessible URI of the captured photo
- * @returns {Promise<{latitude: number|null, longitude: number|null, altitude: number|null, accuracy: number|null, timestamp: string, source: 'exif'|'device'|'none'}>}
+ * @returns {Promise<{latitude: number|null, longitude: number|null, altitude: number|null, accuracy: number|null, capturedAt: string, source: 'exif'|'device'|'none'}>}
  */
 export async function collectGeotagData(imageUri) {
   // Run both in parallel: GPS acquisition can take several seconds, so
@@ -75,7 +119,7 @@ export async function collectGeotagData(imageUri) {
     getDevicePosition(),
   ]);
 
-  const capturedAt = new Date().toISOString();
+  const now = new Date().toISOString();
 
   // Prefer EXIF GPS (from the actual photo), fall back to device GPS
   if (exif.latitude != null && exif.longitude != null) {
@@ -84,7 +128,7 @@ export async function collectGeotagData(imageUri) {
       longitude: exif.longitude,
       altitude: exif.altitude,
       accuracy: null,
-      timestamp: exif.timestamp || device.timestamp || capturedAt,
+      capturedAt: exif.capturedAt || device.capturedAt || now,
       source: 'exif',
     };
   }
@@ -95,7 +139,7 @@ export async function collectGeotagData(imageUri) {
       longitude: device.longitude,
       altitude: device.altitude,
       accuracy: device.accuracy,
-      timestamp: device.timestamp || capturedAt,
+      capturedAt: device.capturedAt || now,
       source: 'device',
     };
   }
@@ -105,7 +149,7 @@ export async function collectGeotagData(imageUri) {
     longitude: null,
     altitude: null,
     accuracy: null,
-    timestamp: capturedAt,
+    capturedAt: now,
     source: 'none',
   };
 }
