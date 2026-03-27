@@ -18,13 +18,13 @@ function normalizeExifTimestamp(exifDateTime) {
 }
 
 /**
- * Extract GPS coordinates and metadata from a photo's EXIF data.
+ * Extract GPS coordinates and all EXIF metadata from a photo.
  *
  * @param {string} imageUri – Web-accessible URI of the captured photo
- * @returns {Promise<{latitude: number|null, longitude: number|null, altitude: number|null, capturedAt: string|null}>}
+ * @returns {Promise<{latitude: number|null, longitude: number|null, altitude: number|null, capturedAt: string|null, allTags: Object}>}
  */
 export async function extractExifGeodata(imageUri) {
-  const result = { latitude: null, longitude: null, altitude: null, capturedAt: null };
+  const result = { latitude: null, longitude: null, altitude: null, capturedAt: null, allTags: {} };
 
   try {
     const response = await fetch(imageUri);
@@ -40,11 +40,57 @@ export async function extractExifGeodata(imageUri) {
     if (tags.exif && tags.exif.DateTimeOriginal) {
       result.capturedAt = normalizeExifTimestamp(tags.exif.DateTimeOriginal.description);
     }
+
+    // Collect all readable EXIF tags for display
+    result.allTags = flattenExifTags(tags);
   } catch (err) {
     console.warn('EXIF extraction failed:', err);
   }
 
   return result;
+}
+
+/**
+ * Flatten ExifReader expanded-format tags into a simple { label: value } map.
+ * Skips binary blobs, thumbnails, and redundant internal fields.
+ *
+ * @param {Object} tags – ExifReader expanded output
+ * @returns {Object} flat map of human-readable tag names to string values
+ */
+function flattenExifTags(tags) {
+  const flat = {};
+  const skipGroups = new Set(['Thumbnail', 'mpentry', 'icc']);
+  const skipKeys = new Set([
+    'MakerNote', 'UserComment', 'ComponentsConfiguration',
+    'FileSource', 'SceneType', 'undefined',
+  ]);
+
+  for (const [group, entries] of Object.entries(tags)) {
+    if (skipGroups.has(group)) continue;
+    if (!entries || typeof entries !== 'object') continue;
+
+    for (const [key, tag] of Object.entries(entries)) {
+      if (skipKeys.has(key)) continue;
+      if (tag == null) continue;
+
+      // expanded gps values are raw numbers, use them directly
+      if (group === 'gps') {
+        flat[key] = String(tag);
+        continue;
+      }
+
+      const desc = tag.description != null ? String(tag.description) : null;
+      const val = tag.value != null ? String(tag.value) : null;
+      const display = desc || val;
+
+      // Skip empty, very long (binary), or purely numeric ID values
+      if (!display || display.length > 200) continue;
+
+      flat[key] = display;
+    }
+  }
+
+  return flat;
 }
 
 /**
@@ -107,9 +153,10 @@ export async function getDevicePosition() {
  * Attempts to read GPS from the photo's EXIF data first, then falls back
  * to the device's live GPS position. Returns a flat object suitable for
  * future SQLite storage (field names match the photos table schema).
+ * Also includes allTags – every readable EXIF tag from the photo.
  *
  * @param {string} imageUri – Web-accessible URI of the captured photo
- * @returns {Promise<{latitude: number|null, longitude: number|null, altitude: number|null, accuracy: number|null, capturedAt: string, source: 'exif'|'device'|'none'}>}
+ * @returns {Promise<{latitude: number|null, longitude: number|null, altitude: number|null, accuracy: number|null, capturedAt: string, source: 'exif'|'device'|'none', allTags: Object}>}
  */
 export async function collectGeotagData(imageUri) {
   // Run both in parallel: GPS acquisition can take several seconds, so
@@ -120,6 +167,7 @@ export async function collectGeotagData(imageUri) {
   ]);
 
   const now = new Date().toISOString();
+  const allTags = exif.allTags || {};
 
   // Prefer EXIF GPS (from the actual photo), fall back to device GPS
   if (exif.latitude != null && exif.longitude != null) {
@@ -130,6 +178,7 @@ export async function collectGeotagData(imageUri) {
       accuracy: null,
       capturedAt: exif.capturedAt || device.capturedAt || now,
       source: 'exif',
+      allTags,
     };
   }
 
@@ -141,6 +190,7 @@ export async function collectGeotagData(imageUri) {
       accuracy: device.accuracy,
       capturedAt: device.capturedAt || now,
       source: 'device',
+      allTags,
     };
   }
 
@@ -151,5 +201,6 @@ export async function collectGeotagData(imageUri) {
     accuracy: null,
     capturedAt: now,
     source: 'none',
+    allTags,
   };
 }

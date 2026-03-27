@@ -15486,6 +15486,7 @@
         "metadata.source.none": "Unknown",
         "metadata.openMap": "\u{1F4CD} Open in Google Maps",
         "metadata.unavailable": "Location data unavailable",
+        "metadata.exifHeader": "Photo Details (EXIF)",
         "login.title": "Sign In",
         "login.subtitle": "Sign in with your Microsoft account to continue.",
         "login.button": "Sign in with Microsoft",
@@ -15516,6 +15517,7 @@
         "metadata.source.none": "Ukjent",
         "metadata.openMap": "\u{1F4CD} \xC5pne i Google Maps",
         "metadata.unavailable": "Posisjonsdata utilgjengelig",
+        "metadata.exifHeader": "Fotodetaljer (EXIF)",
         "login.title": "Logg inn",
         "login.subtitle": "Logg inn med din Microsoft-konto for \xE5 fortsette.",
         "login.button": "Logg inn med Microsoft",
@@ -23596,7 +23598,7 @@
     return date.toISOString();
   }
   async function extractExifGeodata(imageUri) {
-    const result = { latitude: null, longitude: null, altitude: null, capturedAt: null };
+    const result = { latitude: null, longitude: null, altitude: null, capturedAt: null, allTags: {} };
     try {
       const response = await fetch(imageUri);
       const buffer = await response.arrayBuffer();
@@ -23609,10 +23611,41 @@
       if (tags.exif && tags.exif.DateTimeOriginal) {
         result.capturedAt = normalizeExifTimestamp(tags.exif.DateTimeOriginal.description);
       }
+      result.allTags = flattenExifTags(tags);
     } catch (err) {
       console.warn("EXIF extraction failed:", err);
     }
     return result;
+  }
+  function flattenExifTags(tags) {
+    const flat = {};
+    const skipGroups = /* @__PURE__ */ new Set(["Thumbnail", "mpentry", "icc"]);
+    const skipKeys = /* @__PURE__ */ new Set([
+      "MakerNote",
+      "UserComment",
+      "ComponentsConfiguration",
+      "FileSource",
+      "SceneType",
+      "undefined"
+    ]);
+    for (const [group, entries] of Object.entries(tags)) {
+      if (skipGroups.has(group)) continue;
+      if (!entries || typeof entries !== "object") continue;
+      for (const [key, tag] of Object.entries(entries)) {
+        if (skipKeys.has(key)) continue;
+        if (tag == null) continue;
+        if (group === "gps") {
+          flat[key] = String(tag);
+          continue;
+        }
+        const desc = tag.description != null ? String(tag.description) : null;
+        const val = tag.value != null ? String(tag.value) : null;
+        const display = desc || val;
+        if (!display || display.length > 200) continue;
+        flat[key] = display;
+      }
+    }
+    return flat;
   }
   async function ensureGeolocationPermission() {
     let status = await Geolocation2.checkPermissions();
@@ -23653,6 +23686,7 @@
       getDevicePosition()
     ]);
     const now = (/* @__PURE__ */ new Date()).toISOString();
+    const allTags = exif.allTags || {};
     if (exif.latitude != null && exif.longitude != null) {
       return {
         latitude: exif.latitude,
@@ -23660,7 +23694,8 @@
         altitude: exif.altitude,
         accuracy: null,
         capturedAt: exif.capturedAt || device.capturedAt || now,
-        source: "exif"
+        source: "exif",
+        allTags
       };
     }
     if (device.latitude != null && device.longitude != null) {
@@ -23670,7 +23705,8 @@
         altitude: device.altitude,
         accuracy: device.accuracy,
         capturedAt: device.capturedAt || now,
-        source: "device"
+        source: "device",
+        allTags
       };
     }
     return {
@@ -23679,7 +23715,8 @@
       altitude: null,
       accuracy: null,
       capturedAt: now,
-      source: "none"
+      source: "none",
+      allTags
     };
   }
   var init_geotag = __esm({
@@ -23792,11 +23829,10 @@
       }
       function renderMetadata(container, geotag) {
         const mapLink = document.getElementById("photo-map-link");
+        const lines = [];
         if (geotag.latitude != null && geotag.longitude != null) {
-          const lines = [
-            `${t("metadata.latitude")}: ${geotag.latitude.toFixed(6)}`,
-            `${t("metadata.longitude")}: ${geotag.longitude.toFixed(6)}`
-          ];
+          lines.push(`${t("metadata.latitude")}: ${geotag.latitude.toFixed(6)}`);
+          lines.push(`${t("metadata.longitude")}: ${geotag.longitude.toFixed(6)}`);
           if (geotag.altitude != null) {
             lines.push(`${t("metadata.altitude")}: ${geotag.altitude.toFixed(1)} m`);
           }
@@ -23805,16 +23841,23 @@
           }
           lines.push(`${t("metadata.capturedAt")}: ${new Date(geotag.capturedAt).toLocaleString()}`);
           lines.push(`${t("metadata.source")}: ${t("metadata.source." + geotag.source)}`);
-          container.textContent = lines.join("\n");
           if (mapLink) {
             mapLink.href = `https://www.google.com/maps?q=${geotag.latitude},${geotag.longitude}`;
             mapLink.textContent = t("metadata.openMap");
             mapLink.hidden = false;
           }
         } else {
-          container.textContent = t("metadata.unavailable");
+          lines.push(t("metadata.unavailable"));
           if (mapLink) mapLink.hidden = true;
         }
+        if (geotag.allTags && Object.keys(geotag.allTags).length > 0) {
+          lines.push("");
+          lines.push(`\u2500\u2500 ${t("metadata.exifHeader")} \u2500\u2500`);
+          for (const [key, value] of Object.entries(geotag.allTags)) {
+            lines.push(`${key}: ${value}`);
+          }
+        }
+        container.textContent = lines.join("\n");
       }
       if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", init);
