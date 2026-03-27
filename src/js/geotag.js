@@ -59,6 +59,7 @@ export async function extractExifGeodata(imageUri) {
  */
 function flattenExifTags(tags) {
   const flat = {};
+  const MAX_DISPLAY_LENGTH = 200;
   const skipGroups = new Set(['Thumbnail', 'mpentry', 'icc']);
   const skipKeys = new Set([
     'MakerNote', 'UserComment', 'ComponentsConfiguration',
@@ -84,7 +85,7 @@ function flattenExifTags(tags) {
       const display = desc || val;
 
       // Skip empty, very long (binary), or purely numeric ID values
-      if (!display || display.length > 200) continue;
+      if (!display || display.length > MAX_DISPLAY_LENGTH) continue;
 
       flat[key] = display;
     }

@@ -23619,6 +23619,7 @@
   }
   function flattenExifTags(tags) {
     const flat = {};
+    const MAX_DISPLAY_LENGTH = 200;
     const skipGroups = /* @__PURE__ */ new Set(["Thumbnail", "mpentry", "icc"]);
     const skipKeys = /* @__PURE__ */ new Set([
       "MakerNote",
@@ -23641,7 +23642,7 @@
         const desc = tag.description != null ? String(tag.description) : null;
         const val = tag.value != null ? String(tag.value) : null;
         const display = desc || val;
-        if (!display || display.length > 200) continue;
+        if (!display || display.length > MAX_DISPLAY_LENGTH) continue;
         flat[key] = display;
       }
     }
