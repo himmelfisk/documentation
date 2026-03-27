@@ -1,45 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
-import { initI18n } from './i18n.js';
-import { initAuth, login, logout, getAccount } from './auth.js';
-
-// ---------------------------------------------------------------------------
-// UI helpers
-// ---------------------------------------------------------------------------
-
-function showLogin() {
-  document.getElementById('login-screen').hidden = false;
-  document.getElementById('app').hidden = true;
-}
-
-function showApp(account) {
-  document.getElementById('login-screen').hidden = true;
-  document.getElementById('app').hidden = false;
-
-  const name = (account && (account.name || account.username)) || '';
-
-  const userName = document.getElementById('user-name');
-  if (userName) userName.textContent = name;
-
-  const greetingName = document.getElementById('greeting-name');
-  if (greetingName) greetingName.textContent = name;
-}
-
-function showLoginError(err) {
-  const el = document.getElementById('login-error');
-  if (!el) return;
-
-  const message =
-    (err && typeof err.message === 'string' && err.message) ||
-    (typeof err === 'string' && err) ||
-    'Authentication failed. Please try again.';
-  el.textContent = message;
-  el.hidden = false;
-}
-
-// ---------------------------------------------------------------------------
-// Main init
-// ---------------------------------------------------------------------------
+import { initI18n, t } from './i18n.js';
+import { collectGeotagData } from './geotag.js';
 
 async function init() {
   initI18n();
@@ -95,6 +57,7 @@ async function init() {
   // ---- Camera ----
   const takePhotoBtn = document.getElementById('take-photo-btn');
   const photoImage = document.getElementById('photo-image');
+  const metadataContainer = document.getElementById('photo-metadata');
 
   if (takePhotoBtn) {
     takePhotoBtn.addEventListener('click', async () => {
@@ -113,7 +76,56 @@ async function init() {
       } catch (err) {
         console.log('Photo cancelled or failed:', err);
       }
-    });
+
+      // Extract geotag metadata from the photo
+      if (metadataContainer && imageSrc) {
+        metadataContainer.hidden = false;
+        metadataContainer.textContent = t('metadata.loading');
+
+        try {
+          const geotag = await collectGeotagData(imageSrc);
+          console.log('Geotag metadata:', geotag);
+          renderMetadata(metadataContainer, geotag);
+        } catch (geoErr) {
+          console.warn('Geotag collection failed:', geoErr);
+          metadataContainer.textContent = t('metadata.unavailable');
+        }
+      }
+    } catch (err) {
+      console.log('Photo cancelled or failed:', err);
+    }
+  });
+}
+
+/**
+ * Render geotag metadata into the given container element.
+ */
+function renderMetadata(container, geotag) {
+  const mapLink = document.getElementById('photo-map-link');
+
+  if (geotag.latitude != null && geotag.longitude != null) {
+    const lines = [
+      `${t('metadata.latitude')}: ${geotag.latitude.toFixed(6)}`,
+      `${t('metadata.longitude')}: ${geotag.longitude.toFixed(6)}`,
+    ];
+    if (geotag.altitude != null) {
+      lines.push(`${t('metadata.altitude')}: ${geotag.altitude.toFixed(1)} m`);
+    }
+    if (geotag.accuracy != null) {
+      lines.push(`${t('metadata.accuracy')}: ±${geotag.accuracy.toFixed(0)} m`);
+    }
+    lines.push(`${t('metadata.capturedAt')}: ${new Date(geotag.capturedAt).toLocaleString()}`);
+    lines.push(`${t('metadata.source')}: ${t('metadata.source.' + geotag.source)}`);
+    container.textContent = lines.join('\n');
+
+    if (mapLink) {
+      mapLink.href = `https://www.google.com/maps?q=${geotag.latitude},${geotag.longitude}`;
+      mapLink.textContent = t('metadata.openMap');
+      mapLink.hidden = false;
+    }
+  } else {
+    container.textContent = t('metadata.unavailable');
+    if (mapLink) mapLink.hidden = true;
   }
 }
 

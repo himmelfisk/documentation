@@ -97,6 +97,16 @@ p {
   border-radius: 8px;
 }
 
+#photo-metadata {
+  margin-top: 12px;
+  padding: 12px;
+  font-size: 0.85rem;
+  text-align: left;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  white-space: pre-line;
+  line-height: 1.6;
+}
 /* ---- Login screen ---- */
 
 #login-screen {
@@ -220,3 +230,20 @@ p {
 }
 
 
+@media (prefers-color-scheme: dark) {
+  #photo-metadata {
+    background-color: #2a2a2a;
+  }
+}
+
+#photo-map-link {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.9rem;
+  color: #007aff;
+  text-decoration: none;
+}
+
+#photo-map-link:active {
+  color: #005ecb;
+}
