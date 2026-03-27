@@ -15520,6 +15520,22 @@
     "src/js/auth.js"() {
       init_dist2();
       init_dist();
+      if (Capacitor.getPlatform() === "android") {
+        const origSet = window.sessionStorage.setItem.bind(window.sessionStorage);
+        const origRemove = window.sessionStorage.removeItem.bind(window.sessionStorage);
+        window.sessionStorage.setItem = function(key, value) {
+          origSet(key, value);
+          if (typeof key === "string" && key.startsWith("msal.")) {
+            window.localStorage.setItem(key, value);
+          }
+        };
+        window.sessionStorage.removeItem = function(key) {
+          origRemove(key);
+          if (typeof key === "string" && key.startsWith("msal.")) {
+            window.localStorage.removeItem(key);
+          }
+        };
+      }
       CLIENT_ID2 = "65702384-9248-47a3-80d9-bcf5abb69424";
       AUTHORITY = "https://login.microsoftonline.com/common";
       msalConfig = {
