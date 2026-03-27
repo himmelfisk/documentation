@@ -1,6 +1,7 @@
 {
   "app.title": "Documentation",
   "app.welcome": "Welcome to the Documentation app.",
+  "app.greeting": "Hi",
   "photo.addButton": "📷 Submit Documentation",
   "photo.altText": "Captured photo",
   "metadata.loading": "Reading location data…",
@@ -15,4 +16,8 @@
   "metadata.source.none": "Unknown",
   "metadata.openMap": "📍 Open in Google Maps",
   "metadata.unavailable": "Location data unavailable"
+  "login.title": "Sign In",
+  "login.subtitle": "Sign in with your Microsoft account to continue.",
+  "login.button": "Sign in with Microsoft",
+  "login.logout": "Sign out"
 }

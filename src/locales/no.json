@@ -1,6 +1,7 @@
 {
   "app.title": "Dokumentasjon",
   "app.welcome": "Velkommen til Dokumentasjon-appen.",
+  "app.greeting": "Hei",
   "photo.addButton": "📷 Send inn dokumentasjon",
   "photo.altText": "Tatt bilde",
   "metadata.loading": "Leser posisjonsdata…",
@@ -15,4 +16,8 @@
   "metadata.source.none": "Ukjent",
   "metadata.openMap": "📍 Åpne i Google Maps",
   "metadata.unavailable": "Posisjonsdata utilgjengelig"
+  "login.title": "Logg inn",
+  "login.subtitle": "Logg inn med din Microsoft-konto for å fortsette.",
+  "login.button": "Logg inn med Microsoft",
+  "login.logout": "Logg ut"
 }
