@@ -97,4 +97,122 @@ p {
   border-radius: 8px;
 }
 
+/* ---- Login screen ---- */
+
+#login-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+}
+
+.login-card {
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  padding: 32px 24px;
+}
+
+.login-card h1 {
+  font-size: 1.6rem;
+  margin-bottom: 12px;
+}
+
+.login-card p {
+  margin-bottom: 24px;
+  color: #666;
+}
+
+@media (prefers-color-scheme: dark) {
+  .login-card p {
+    color: #aaa;
+  }
+}
+
+#login-btn {
+  -webkit-appearance: none;
+  appearance: none;
+  display: inline-block;
+  padding: 14px 28px;
+  font-size: 1rem;
+  font-family: inherit;
+  color: #ffffff;
+  background-color: #0078d4;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#login-btn:active {
+  background-color: #005a9e;
+}
+
+#login-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.login-error {
+  margin-top: 16px;
+  color: #d32f2f;
+  font-size: 0.85rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .login-error {
+    color: #ef9a9a;
+  }
+}
+
+/* ---- User bar (logged-in header) ---- */
+
+#user-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+#user-name {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+@media (prefers-color-scheme: dark) {
+  #user-name {
+    color: #bbb;
+  }
+}
+
+#logout-btn {
+  -webkit-appearance: none;
+  appearance: none;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: #333;
+  background-color: #e8e8e8;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#logout-btn:active {
+  background-color: #d0d0d0;
+}
+
+@media (prefers-color-scheme: dark) {
+  #logout-btn {
+    color: #e0e0e0;
+    background-color: #333;
+    border-color: #555;
+  }
+  #logout-btn:active {
+    background-color: #444;
+  }
+}
+
 
