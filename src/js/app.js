@@ -22,12 +22,16 @@ function showApp(account) {
   }
 }
 
-function showLoginError(message) {
+function showLoginError(err) {
   const el = document.getElementById('login-error');
-  if (el) {
-    el.textContent = message;
-    el.hidden = false;
-  }
+  if (!el) return;
+
+  const message =
+    (err && typeof err.message === 'string' && err.message) ||
+    (typeof err === 'string' && err) ||
+    'Authentication failed. Please try again.';
+  el.textContent = message;
+  el.hidden = false;
 }
 
 // ---------------------------------------------------------------------------
@@ -53,7 +57,7 @@ async function init() {
   } catch (err) {
     console.error('Auth initialisation failed:', err);
     showLogin();
-    showLoginError(String(err.message || err));
+    showLoginError(err);
   }
 
   // ---- Login button ----
@@ -67,7 +71,7 @@ async function init() {
         // only reached if something prevents the redirect.
       } catch (err) {
         console.error('Login failed:', err);
-        showLoginError(String(err.message || err));
+        showLoginError(err);
         loginBtn.disabled = false;
       }
     });

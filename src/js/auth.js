@@ -17,9 +17,13 @@ import { Capacitor } from '@capacitor/core';
 // ---------------------------------------------------------------------------
 
 /**
- * Replace this with your real Azure AD app-registration client ID.
- * The authority uses /common so any Entra tenant can sign in —
- * perfect for a multi-tenant construction-company app.
+ * Azure AD app-registration client ID.
+ *
+ * Replace this placeholder with the real Application (client) ID from your
+ * Azure AD app registration before deploying.  In an SPA the client ID is
+ * public (no secret), so embedding it in the bundle is the standard approach.
+ *
+ * @see https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app
  */
 const CLIENT_ID = 'YOUR_CLIENT_ID';
 const AUTHORITY = 'https://login.microsoftonline.com/common';
@@ -121,16 +125,16 @@ export function getAccount() {
  * Falls back to an interactive redirect if the silent call fails
  * (e.g. because consent is required or the refresh token expired).
  *
- * @param {string[]} [scopes] – defaults to ['User.Read']
+ * @param {string[]} [requestedScopes] – defaults to ['User.Read']
  * @returns {Promise<string>} access token
  */
-export async function getAccessToken(scopes) {
+export async function getAccessToken(requestedScopes) {
   if (!msalInstance) throw new Error('Call initAuth() first');
 
   const account = getAccount();
   if (!account) throw new Error('No signed-in account');
 
-  const request = { scopes: scopes || loginRequest.scopes, account };
+  const request = { scopes: requestedScopes || loginRequest.scopes, account };
 
   try {
     const result = await msalInstance.acquireTokenSilent(request);
