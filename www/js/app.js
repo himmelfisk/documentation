@@ -23742,15 +23742,24 @@
     return flat;
   }
   async function ensureGeolocationPermission() {
-    let status = await Geolocation2.checkPermissions();
-    if (status.location === "granted" || status.coarseLocation === "granted") {
-      return true;
-    }
-    if (status.location === "denied") {
+    try {
+      let status = await Geolocation2.checkPermissions();
+      console.log("Geolocation checkPermissions result:", JSON.stringify(status));
+      if (status.location === "granted" || status.coarseLocation === "granted") {
+        return true;
+      }
+      if (status.location === "denied") {
+        console.warn("Geolocation permission is denied");
+        return false;
+      }
+      console.log("Requesting geolocation permission\u2026");
+      status = await Geolocation2.requestPermissions({ permissions: ["location"] });
+      console.log("Geolocation requestPermissions result:", JSON.stringify(status));
+      return status.location === "granted" || status.coarseLocation === "granted";
+    } catch (err) {
+      console.warn("Geolocation permission check/request failed:", err);
       return false;
     }
-    status = await Geolocation2.requestPermissions({ permissions: ["location"] });
-    return status.location === "granted" || status.coarseLocation === "granted";
   }
   async function getDevicePosition() {
     const result = { latitude: null, longitude: null, altitude: null, accuracy: null, capturedAt: null };
@@ -23764,6 +23773,7 @@
         enableHighAccuracy: true,
         timeout: 1e4
       });
+      console.log("Device position:", JSON.stringify(position));
       result.latitude = position.coords.latitude;
       result.longitude = position.coords.longitude;
       result.altitude = position.coords.altitude;
@@ -23779,6 +23789,8 @@
       extractExifGeodata(imageUri, cameraExif),
       getDevicePosition()
     ]);
+    console.log("EXIF geodata:", JSON.stringify(exif, null, 2));
+    console.log("Device position result:", JSON.stringify(device, null, 2));
     const now = (/* @__PURE__ */ new Date()).toISOString();
     const allTags = exif.allTags || {};
     if (exif.latitude != null && exif.longitude != null) {
