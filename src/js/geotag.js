@@ -154,6 +154,7 @@ export async function extractExifGeodata(imageUri, cameraExif) {
 
   try {
     const response = await fetch(imageUri);
+    if (!response.ok) throw new Error(`HTTP ${response.status} fetching image`);
     const buffer = await response.arrayBuffer();
     const tags = ExifReader.load(buffer, { expanded: true });
 
