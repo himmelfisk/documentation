@@ -15,6 +15,7 @@
  */
 
 import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { getAdminHtml } from './admin-html.js';
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -38,13 +39,19 @@ const jwks = createRemoteJWKSet(JWKS_URL);
  */
 const TABLE = 'documentation';
 
+/**
+ * Table name for construction sites — separate from the photo metadata table.
+ * SECURITY: Hardcoded string literal, never derived from user input.
+ */
+const SITES_TABLE = 'sites';
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Authorization, Content-Type',
   'Access-Control-Max-Age': '86400',
 };
@@ -196,6 +203,116 @@ async function handleGetImage(env, claims, tenantId, filename) {
 }
 
 // ---------------------------------------------------------------------------
+// Sites table helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Ensure the `sites` table exists.  Called lazily on the first sites-related
+ * request so we don't run DDL on every Worker invocation.
+ */
+let sitesTableReady = false;
+async function ensureSitesTable(db) {
+  if (sitesTableReady) return;
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS ${SITES_TABLE} (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      name        TEXT    NOT NULL,
+      description TEXT    DEFAULT '',
+      latitude    REAL,
+      longitude   REAL,
+      address     TEXT    DEFAULT '',
+      created     TEXT    NOT NULL,
+      modified    TEXT    NOT NULL
+    )
+  `).run();
+  sitesTableReady = true;
+}
+
+// ---------------------------------------------------------------------------
+// Sites route handlers  (no auth required — admin panel)
+// ---------------------------------------------------------------------------
+
+/** GET /api/sites — list all registered sites. */
+async function handleGetSites(env) {
+  await ensureSitesTable(env.DB);
+  const result = await env.DB.prepare(
+    `SELECT id, name, description, latitude, longitude, address, created, modified FROM ${SITES_TABLE} ORDER BY created DESC`,
+  ).all();
+  return json({ sites: result.results });
+}
+
+/** POST /api/sites — register a new site. */
+async function handlePostSite(request, env) {
+  await ensureSitesTable(env.DB);
+
+  const body = await request.json();
+  const name = typeof body.name === 'string' ? body.name.trim() : '';
+  if (!name) {
+    return json({ error: 'Site name is required' }, 400);
+  }
+
+  const description = typeof body.description === 'string' ? body.description.trim() : '';
+  const latitude = typeof body.latitude === 'number' && isFinite(body.latitude) && body.latitude >= -90 && body.latitude <= 90 ? body.latitude : null;
+  const longitude = typeof body.longitude === 'number' && isFinite(body.longitude) && body.longitude >= -180 && body.longitude <= 180 ? body.longitude : null;
+  const address = typeof body.address === 'string' ? body.address.trim() : '';
+  const now = new Date().toISOString();
+
+  const result = await env.DB.prepare(
+    `INSERT INTO ${SITES_TABLE} (name, description, latitude, longitude, address, created, modified) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+  )
+    .bind(name, description, latitude, longitude, address, now, now)
+    .run();
+
+  return json({ success: true, id: result.meta.last_row_id }, 201);
+}
+
+/** PUT /api/sites/:id — update an existing site. */
+async function handlePutSite(request, env, siteId) {
+  await ensureSitesTable(env.DB);
+
+  const body = await request.json();
+  const name = typeof body.name === 'string' ? body.name.trim() : '';
+  if (!name) {
+    return json({ error: 'Site name is required' }, 400);
+  }
+
+  const description = typeof body.description === 'string' ? body.description.trim() : '';
+  const latitude = typeof body.latitude === 'number' && isFinite(body.latitude) && body.latitude >= -90 && body.latitude <= 90 ? body.latitude : null;
+  const longitude = typeof body.longitude === 'number' && isFinite(body.longitude) && body.longitude >= -180 && body.longitude <= 180 ? body.longitude : null;
+  const address = typeof body.address === 'string' ? body.address.trim() : '';
+  const now = new Date().toISOString();
+
+  const result = await env.DB.prepare(
+    `UPDATE ${SITES_TABLE} SET name = ?, description = ?, latitude = ?, longitude = ?, address = ?, modified = ? WHERE id = ?`,
+  )
+    .bind(name, description, latitude, longitude, address, now, siteId)
+    .run();
+
+  if (result.meta.changes === 0) {
+    return json({ error: 'Site not found' }, 404);
+  }
+
+  return json({ success: true });
+}
+
+/** DELETE /api/sites/:id — remove a site. */
+async function handleDeleteSite(env, siteId) {
+  await ensureSitesTable(env.DB);
+
+  const result = await env.DB.prepare(
+    `DELETE FROM ${SITES_TABLE} WHERE id = ?`,
+  )
+    .bind(siteId)
+    .run();
+
+  if (result.meta.changes === 0) {
+    return json({ error: 'Site not found' }, 404);
+  }
+
+  return json({ success: true });
+}
+
+// ---------------------------------------------------------------------------
 // Worker entry point
 // ---------------------------------------------------------------------------
 
@@ -208,12 +325,54 @@ export default {
 
     const url = new URL(request.url);
 
-    // Only /api/* routes are handled
+    // ---- Admin panel (no auth) ----
+    if (url.pathname === '/admin' || url.pathname === '/admin/') {
+      return new Response(getAdminHtml(url.origin), {
+        headers: { 'Content-Type': 'text/html; charset=utf-8', ...CORS_HEADERS },
+      });
+    }
+
+    // ---- Sites API (no auth) ----
+    if (url.pathname === '/api/sites' && request.method === 'GET') {
+      try {
+        return await handleGetSites(env);
+      } catch (err) {
+        console.error('GET /api/sites failed:', err);
+        return json({ error: 'Internal server error' }, 500);
+      }
+    }
+
+    if (url.pathname === '/api/sites' && request.method === 'POST') {
+      try {
+        return await handlePostSite(request, env);
+      } catch (err) {
+        console.error('POST /api/sites failed:', err);
+        return json({ error: 'Internal server error' }, 500);
+      }
+    }
+
+    const sitesMatch = url.pathname.match(/^\/api\/sites\/(\d+)$/);
+    if (sitesMatch) {
+      const siteId = parseInt(sitesMatch[1], 10);
+      try {
+        if (request.method === 'PUT') {
+          return await handlePutSite(request, env, siteId);
+        }
+        if (request.method === 'DELETE') {
+          return await handleDeleteSite(env, siteId);
+        }
+      } catch (err) {
+        console.error(`${request.method} /api/sites/${siteId} failed:`, err);
+        return json({ error: 'Internal server error' }, 500);
+      }
+    }
+
+    // ---- Authenticated API routes (/api/*) ----
     if (!url.pathname.startsWith('/api/')) {
       return json({ error: 'Not found' }, 404);
     }
 
-    // Authenticate every API request
+    // Authenticate every remaining API request
     const claims = await authenticate(request);
     if (!claims) {
       return json({ error: 'Unauthorized' }, 401);
