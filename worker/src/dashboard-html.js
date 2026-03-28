@@ -696,10 +696,26 @@ export function getDashboardHtml(origin) {
       }
 
       // Get photos assigned to a site (nearest-site match)
+      // Uses a cached mapping rebuilt when data changes.
+      let photoSiteMap = null; // Map<photoIndex, siteId>
+
+      function buildPhotoSiteMap() {
+        photoSiteMap = new Map();
+        const sitesWithCoords = sites.filter(s => s.latitude !== null && s.longitude !== null);
+        if (sitesWithCoords.length === 0) return;
+        for (let i = 0; i < photos.length; i++) {
+          const sid = nearestSiteId(photos[i], sitesWithCoords);
+          if (sid !== null) photoSiteMap.set(i, sid);
+        }
+      }
+
       function photosForSite(siteId) {
-        const sitesWithCoords = sites.filter(s => s.latitude != null && s.longitude != null);
-        if (sitesWithCoords.length === 0) return [];
-        return photos.filter(p => nearestSiteId(p, sitesWithCoords) === siteId);
+        if (photoSiteMap === null) buildPhotoSiteMap();
+        const result = [];
+        for (let i = 0; i < photos.length; i++) {
+          if (photoSiteMap.get(i) === siteId) result.push(photos[i]);
+        }
+        return result;
       }
 
       // ---- Check admin status ----
@@ -770,15 +786,16 @@ export function getDashboardHtml(origin) {
           photos = [];
           statPhotos.textContent = '0';
         }
+        photoSiteMap = null; // invalidate cache
         renderPhotos();
       }
 
       function renderPhotos() {
         photosLoading.hidden = true;
-        const displayPhotos = activeSiteId != null ? photosForSite(activeSiteId) : photos;
+        const displayPhotos = activeSiteId !== null ? photosForSite(activeSiteId) : photos;
 
         if (displayPhotos.length === 0) {
-          const msg = activeSiteId != null
+          const msg = activeSiteId !== null
             ? 'No documentation for this site yet.<br>Upload photos near this site from the mobile app.'
             : 'No photos yet.<br>Upload photos from the mobile app.';
           photoGrid.innerHTML =
@@ -829,6 +846,7 @@ export function getDashboardHtml(origin) {
           sites = [];
           statSites.textContent = '0';
         }
+        photoSiteMap = null; // invalidate cache
         renderSites();
       }
 
