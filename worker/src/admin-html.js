@@ -621,6 +621,9 @@ export function getAdminHtml(origin) {
   <div class="toast" id="toast"></div>
 
   <script type="module">
+    // MSAL Browser loaded via jsDelivr's ESM endpoint.
+    // Note: SRI (integrity) is not used because jsDelivr's +esm transform
+    // may change its output across deployments; a fixed hash would break the page.
     import { PublicClientApplication } from 'https://cdn.jsdelivr.net/npm/@azure/msal-browser@5.6.1/+esm';
 
     // ---- MSAL configuration ----
@@ -655,7 +658,8 @@ export function getAdminHtml(origin) {
       try {
         const result = await pca.acquireTokenSilent({ ...loginRequest, account });
         return result.idToken;
-      } catch {
+      } catch (err) {
+        console.warn('acquireTokenSilent failed:', err);
         return null;
       }
     }

@@ -232,8 +232,10 @@ async function ensureSitesTable(db) {
     await db.prepare(
       `ALTER TABLE ${SITES_TABLE} ADD COLUMN tenant_id TEXT DEFAULT ''`,
     ).run();
-  } catch {
-    // Column already exists — expected after the first migration run.
+  } catch (err) {
+    // "duplicate column name" is expected after the first migration run.
+    // Re-throw anything else so genuine DB errors aren't swallowed.
+    if (!String(err).includes('duplicate column name')) throw err;
   }
   sitesTableReady = true;
 }
