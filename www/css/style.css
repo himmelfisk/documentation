@@ -256,3 +256,19 @@ p {
     color: #40a9ff;
   }
 }
+
+/* ---- Version footer ---- */
+
+#version-footer {
+  max-width: 600px;
+  margin: 48px auto 16px;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #999;
+}
+
+@media (prefers-color-scheme: dark) {
+  #version-footer {
+    color: #666;
+  }
+}
