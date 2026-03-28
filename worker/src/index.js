@@ -98,23 +98,60 @@ async function authenticate(request) {
 // Route handlers
 // ---------------------------------------------------------------------------
 
-/** POST /api/photos — store photo metadata for the authenticated tenant. */
+/** POST /api/photos — upload photo + metadata for the authenticated tenant. */
 async function handlePostPhoto(request, env, claims) {
-  const body = await request.json();
-
+  const contentType = request.headers.get('Content-Type') || '';
   const user = claims.name || 'Unknown';
   const tenantId = claims.tid;
-  const imagelocation = typeof body.imagelocation === 'string' ? body.imagelocation : '';
-  const created = typeof body.created === 'string' ? body.created : new Date().toISOString();
   const now = new Date().toISOString();
 
+  let imagelocation = '';
+  let created = now;
+  let imageUrl = '';
+
+  if (contentType.includes('multipart/form-data')) {
+    // ── FormData upload (image + metadata) ──
+    const formData = await request.formData();
+    const imageFile = formData.get('image');
+    const metadataRaw = formData.get('metadata');
+
+    let meta = {};
+    if (metadataRaw) {
+      try { meta = JSON.parse(metadataRaw); } catch { /* ignore */ }
+    }
+
+    imagelocation = typeof meta.imagelocation === 'string' ? meta.imagelocation : '';
+    created = typeof meta.created === 'string' ? meta.created : now;
+
+    if (imageFile && imageFile.size > 0) {
+      const mimeExtMap = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
+      const ext = mimeExtMap[imageFile.type] || 'jpg';
+      const filename = `${crypto.randomUUID()}.${ext}`;
+      const key = `${tenantId}/${filename}`;
+
+      await env.BUCKET.put(key, imageFile.stream(), {
+        httpMetadata: {
+          contentType: imageFile.type || 'image/jpeg',
+        },
+      });
+
+      const origin = new URL(request.url).origin;
+      imageUrl = `${origin}/api/photos/image/${encodeURIComponent(tenantId)}/${filename}`;
+    }
+  } else {
+    // ── JSON body (backwards-compatible) ──
+    const body = await request.json();
+    imagelocation = typeof body.imagelocation === 'string' ? body.imagelocation : '';
+    created = typeof body.created === 'string' ? body.created : now;
+  }
+
   await env.DB.prepare(
-    `INSERT INTO ${TABLE} (user, imagelocation, created, modified, tenant_id) VALUES (?, ?, ?, ?, ?)`,
+    `INSERT INTO ${TABLE} (user, imagelocation, created, modified, imageurl, tenant_id) VALUES (?, ?, ?, ?, ?, ?)`,
   )
-    .bind(user, imagelocation, created, now, tenantId)
+    .bind(user, imagelocation, created, now, imageUrl, tenantId)
     .run();
 
-  return json({ success: true });
+  return json({ success: true, imageUrl });
 }
 
 /** GET /api/photos — list photos scoped to the authenticated tenant. */
@@ -126,6 +163,36 @@ async function handleGetPhotos(env, claims) {
     .all();
 
   return json({ photos: result.results });
+}
+
+/**
+ * GET /api/photos/image/:tenantId/:filename — serve an image from R2.
+ *
+ * The R2 key is `{tenantId}/{filename}`.  Access is restricted to the
+ * authenticated tenant that owns the image.
+ */
+async function handleGetImage(env, claims, tenantId, filename) {
+  // Only allow the owning tenant to access their images
+  if (tenantId !== claims.tid) {
+    return json({ error: 'Forbidden' }, 403);
+  }
+
+  // Validate filename — only allow uuid.ext pattern with known image extensions
+  if (!/^[0-9a-f-]+\.(jpg|png|webp|gif)$/i.test(filename)) {
+    return json({ error: 'Bad request' }, 400);
+  }
+
+  const key = `${tenantId}/${filename}`;
+  const object = await env.BUCKET.get(key);
+  if (!object) {
+    return json({ error: 'Not found' }, 404);
+  }
+
+  const headers = new Headers(CORS_HEADERS);
+  headers.set('Content-Type', object.httpMetadata?.contentType || 'image/jpeg');
+  headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+
+  return new Response(object.body, { headers });
 }
 
 // ---------------------------------------------------------------------------
@@ -161,6 +228,19 @@ export default {
       // GET /api/photos
       if (url.pathname === '/api/photos' && request.method === 'GET') {
         return await handleGetPhotos(env, claims);
+      }
+
+      // GET /api/photos/image/:tenantId/:filename
+      const imageMatch = url.pathname.match(
+        /^\/api\/photos\/image\/([^/]+)\/([^/]+)$/,
+      );
+      if (imageMatch && request.method === 'GET') {
+        return await handleGetImage(
+          env,
+          claims,
+          decodeURIComponent(imageMatch[1]),
+          decodeURIComponent(imageMatch[2]),
+        );
       }
     } catch (err) {
       console.error('Request failed:', err);

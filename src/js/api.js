@@ -27,18 +27,23 @@ const API_BASE = 'https://documentation-api.k-a-lorgen.workers.dev';
 // ---------------------------------------------------------------------------
 
 /**
- * Submit photo metadata to the backend.
+ * Submit a photo (image + metadata) to the backend.
+ *
+ * The image is uploaded to R2 storage and the metadata (location,
+ * timestamp) is stored in D1.  If no imageBlob is provided the request
+ * falls back to a JSON-only metadata submission.
  *
  * @param {object} opts
  * @param {number|null} opts.latitude
  * @param {number|null} opts.longitude
  * @param {string|null} opts.capturedAt  ISO 8601 timestamp
- * @returns {Promise<{success: boolean}>}
+ * @param {Blob|null}   opts.imageBlob   Photo image data
+ * @returns {Promise<{success: boolean, imageUrl?: string}>}
  */
-export async function submitPhotoMetadata({ latitude, longitude, capturedAt }) {
+export async function submitPhoto({ latitude, longitude, capturedAt, imageBlob }) {
   const token = await getIdToken();
   if (!token) {
-    throw new Error('Not authenticated — cannot submit metadata.');
+    throw new Error('Not authenticated — cannot submit photo.');
   }
 
   const imagelocation =
@@ -46,17 +51,40 @@ export async function submitPhotoMetadata({ latitude, longitude, capturedAt }) {
       ? `${latitude},${longitude}`
       : '';
 
-  const response = await fetch(`${API_BASE}/api/photos`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      imagelocation,
-      created: capturedAt || new Date().toISOString(),
-    }),
+  const metadata = JSON.stringify({
+    imagelocation,
+    created: capturedAt || new Date().toISOString(),
   });
+
+  let response;
+
+  if (imageBlob) {
+    // ── FormData upload (image + metadata) ──
+    const mimeExtMap = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
+    const ext = mimeExtMap[imageBlob.type] || 'jpg';
+    const formData = new FormData();
+    formData.append('image', imageBlob, `photo.${ext}`);
+    formData.append('metadata', metadata);
+
+    response = await fetch(`${API_BASE}/api/photos`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        // Content-Type is set automatically by the browser for FormData
+      },
+      body: formData,
+    });
+  } else {
+    // ── JSON-only fallback (no image) ──
+    response = await fetch(`${API_BASE}/api/photos`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: metadata,
+    });
+  }
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));

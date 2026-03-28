@@ -23906,23 +23906,41 @@
   });
 
   // src/js/api.js
-  async function submitPhotoMetadata({ latitude, longitude, capturedAt }) {
+  async function submitPhoto({ latitude, longitude, capturedAt, imageBlob }) {
     const token = await getIdToken();
     if (!token) {
-      throw new Error("Not authenticated \u2014 cannot submit metadata.");
+      throw new Error("Not authenticated \u2014 cannot submit photo.");
     }
     const imagelocation = latitude != null && longitude != null ? `${latitude},${longitude}` : "";
-    const response = await fetch(`${API_BASE}/api/photos`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        imagelocation,
-        created: capturedAt || (/* @__PURE__ */ new Date()).toISOString()
-      })
+    const metadata = JSON.stringify({
+      imagelocation,
+      created: capturedAt || (/* @__PURE__ */ new Date()).toISOString()
     });
+    let response;
+    if (imageBlob) {
+      const mimeExtMap = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif" };
+      const ext = mimeExtMap[imageBlob.type] || "jpg";
+      const formData = new FormData();
+      formData.append("image", imageBlob, `photo.${ext}`);
+      formData.append("metadata", metadata);
+      response = await fetch(`${API_BASE}/api/photos`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`
+          // Content-Type is set automatically by the browser for FormData
+        },
+        body: formData
+      });
+    } else {
+      response = await fetch(`${API_BASE}/api/photos`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: metadata
+      });
+    }
     if (!response.ok) {
       const body = await response.json().catch(() => ({}));
       throw new Error(body.error || `Upload failed (HTTP ${response.status})`);
@@ -24006,16 +24024,24 @@
               if (metadataContainer && imageSrc) {
                 metadataContainer.hidden = false;
                 metadataContainer.textContent = t("metadata.loading");
+                let imageBlob = null;
+                try {
+                  const blobResp = await fetch(imageSrc);
+                  imageBlob = await blobResp.blob();
+                } catch (blobErr) {
+                  console.warn("Could not fetch image blob for upload:", blobErr);
+                }
                 try {
                   const geotag = await collectGeotagData(imageSrc, photo.exif);
                   console.log("Geotag metadata:", geotag);
                   renderMetadata(metadataContainer, geotag);
                   showUploadStatus("pending");
                   try {
-                    await submitPhotoMetadata({
+                    await submitPhoto({
                       latitude: geotag.latitude,
                       longitude: geotag.longitude,
-                      capturedAt: geotag.capturedAt
+                      capturedAt: geotag.capturedAt,
+                      imageBlob
                     });
                     showUploadStatus("success");
                   } catch (uploadErr) {
