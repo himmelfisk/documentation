@@ -655,7 +655,6 @@ export function getAdminHtml(origin) {
           'as a "Single-page application" (not "Web") in the Azure app registration. ' +
           'See the README for setup instructions.';
         document.getElementById('login-btn').disabled = true;
-        throw err;
       }
       throw err;
     }
