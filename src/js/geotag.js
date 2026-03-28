@@ -285,26 +285,73 @@ export async function ensureGeolocationPermission() {
 }
 
 /**
+ * Fallback: get the device position using the WebView's built-in
+ * navigator.geolocation API.  This works independently of the Capacitor
+ * Geolocation plugin and relies on the Android WebView's geolocation
+ * support (WebChromeClient.onGeolocationPermissionsShowPrompt + WebSettings
+ * .setGeolocationEnabled, both already configured by Capacitor's Bridge).
+ *
+ * @returns {Promise<GeolocationPosition>}
+ */
+function webViewGetCurrentPosition() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('navigator.geolocation not available'));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 0,
+    });
+  });
+}
+
+/**
  * Get the device's current GPS position via Capacitor Geolocation.
+ *
+ * Falls back to the WebView's navigator.geolocation API when the native
+ * plugin fails (e.g. missing Google Play Services, aggressive location-
+ * services pre-check, or plugin registration issues on some devices).
  *
  * @returns {Promise<{latitude: number|null, longitude: number|null, altitude: number|null, accuracy: number|null, capturedAt: string|null}>}
  */
 export async function getDevicePosition() {
   const result = { latitude: null, longitude: null, altitude: null, accuracy: null, capturedAt: null };
 
+  // --- Attempt 1: Capacitor Geolocation plugin (native FusedLocationProvider) ---
   try {
     const granted = await ensureGeolocationPermission();
     if (!granted) {
-      console.warn('Geolocation permission not granted');
+      console.warn('Geolocation permission not granted via Capacitor plugin');
+      // Don't return yet — the WebView fallback may still prompt for permission
+    } else {
+      const position = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 10000,
+      });
+
+      console.log('Device position (Capacitor):', JSON.stringify(position));
+
+      result.latitude = position.coords.latitude;
+      result.longitude = position.coords.longitude;
+      result.altitude = position.coords.altitude;
+      result.accuracy = position.coords.accuracy;
+      result.capturedAt = new Date(position.timestamp).toISOString();
       return result;
     }
+  } catch (err) {
+    console.warn('Capacitor Geolocation plugin failed, trying WebView fallback:', err);
+  }
 
-    const position = await Geolocation.getCurrentPosition({
-      enableHighAccuracy: true,
-      timeout: 10000,
-    });
+  // --- Attempt 2: WebView navigator.geolocation (browser API) ---
+  // The Android WebView has geolocation support enabled by Capacitor's Bridge
+  // (setGeolocationEnabled + BridgeWebChromeClient.onGeolocationPermissionsShowPrompt).
+  // This path works even without Google Play Services.
+  try {
+    const position = await webViewGetCurrentPosition();
 
-    console.log('Device position:', JSON.stringify(position));
+    console.log('Device position (WebView fallback):', JSON.stringify(position));
 
     result.latitude = position.coords.latitude;
     result.longitude = position.coords.longitude;
@@ -312,7 +359,7 @@ export async function getDevicePosition() {
     result.accuracy = position.coords.accuracy;
     result.capturedAt = new Date(position.timestamp).toISOString();
   } catch (err) {
-    console.warn('Device geolocation failed:', err);
+    console.warn('WebView geolocation fallback also failed:', err);
   }
 
   return result;
