@@ -459,7 +459,7 @@ export function getAdminHtml(origin) {
             <input type="hidden" id="site-lng-input" value="">
             <div class="map-coords">
               <span id="map-coords-display">Click the map to set a pin</span>
-              <button type="button" class="clear-pin" id="clear-pin-btn" hidden>✕ Clear pin</button>
+              <button type="button" class="clear-pin" id="clear-pin-btn" aria-label="Clear pin" hidden>✕ Clear pin</button>
             </div>
           </div>
 
@@ -639,7 +639,7 @@ export function getAdminHtml(origin) {
           maxZoom: 19,
           attribution: '© OpenStreetMap',
         }).addTo(map);
-        L.control.attribution({ prefix: false }).addAttribution('© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>').addTo(map);
+        L.control.attribution({ prefix: false }).addAttribution('© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>').addTo(map);
 
         map.on('click', function (e) {
           setPin(e.latlng.lat, e.latlng.lng);
