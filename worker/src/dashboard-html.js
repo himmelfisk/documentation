@@ -310,12 +310,20 @@ export function getDashboardHtml(origin) {
       gap: 12px;
       padding: 12px 0;
       border-bottom: 1px solid #eee;
+      cursor: pointer;
+      transition: background-color 0.15s;
+      border-radius: 8px;
+      padding: 12px;
+      margin: 0 -12px;
     }
+
+    .site-item:hover { background-color: rgba(0,122,255,0.06); }
 
     .site-item:last-child { border-bottom: none; }
 
     @media (prefers-color-scheme: dark) {
       .site-item { border-bottom-color: #444; }
+      .site-item:hover { background-color: rgba(0,122,255,0.12); }
     }
 
     .site-icon {
@@ -337,6 +345,56 @@ export function getDashboardHtml(origin) {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+
+    .site-chevron {
+      color: #bbb;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .site-chevron { color: #666; }
+    }
+
+    /* ---- Site detail header ---- */
+    .site-detail-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .btn-back {
+      padding: 6px 14px;
+      font-size: 0.85rem;
+      font-family: inherit;
+      color: #007aff;
+      background: none;
+      border: 1px solid #007aff;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.15s;
+      flex-shrink: 0;
+    }
+    .btn-back:hover { background-color: rgba(0,122,255,0.08); }
+
+    @media (prefers-color-scheme: dark) {
+      .btn-back { border-color: #0a84ff; color: #0a84ff; }
+      .btn-back:hover { background-color: rgba(10,132,255,0.12); }
+    }
+
+    .site-detail-title {
+      font-size: 1rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .site-detail-subtitle {
+      font-size: 0.82rem;
+      color: #888;
     }
 
     /* ---- Empty state ---- */
@@ -463,6 +521,13 @@ export function getDashboardHtml(origin) {
 
     <!-- Photos tab -->
     <div id="tab-photos">
+      <div class="site-detail-header" id="site-detail-header" hidden>
+        <button class="btn-back" id="back-to-sites-btn">← All Sites</button>
+        <div>
+          <div class="site-detail-title" id="site-detail-name"></div>
+          <div class="site-detail-subtitle" id="site-detail-count"></div>
+        </div>
+      </div>
       <div class="loading" id="photos-loading">Loading photos…</div>
       <div class="photo-grid" id="photo-grid"></div>
     </div>
@@ -598,6 +663,61 @@ export function getDashboardHtml(origin) {
         return div.innerHTML;
       }
 
+      // ---- Haversine distance (metres) between two GPS points ----
+      function haversineDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371000; // Earth radius in metres
+        const toRad = (d) => d * Math.PI / 180;
+        const dLat = toRad(lat2 - lat1);
+        const dLon = toRad(lon2 - lon1);
+        const a = Math.sin(dLat / 2) ** 2 +
+                  Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      }
+
+      // Find nearest site for a photo; returns site id or null
+      function nearestSiteId(photo, sitesWithCoords) {
+        if (!photo.imagelocation) return null;
+        const parts = photo.imagelocation.split(',');
+        if (parts.length < 2) return null;
+        const pLat = parseFloat(parts[0]);
+        const pLng = parseFloat(parts[1]);
+        if (isNaN(pLat) || isNaN(pLng)) return null;
+
+        let bestId = null;
+        let bestDist = Infinity;
+        for (const s of sitesWithCoords) {
+          const d = haversineDistance(pLat, pLng, s.latitude, s.longitude);
+          if (d < bestDist) {
+            bestDist = d;
+            bestId = s.id;
+          }
+        }
+        return bestId;
+      }
+
+      // Get photos assigned to a site (nearest-site match)
+      // Uses a cached mapping rebuilt when data changes.
+      let photoSiteMap = null; // Map<photoIndex, siteId>
+
+      function buildPhotoSiteMap() {
+        photoSiteMap = new Map();
+        const sitesWithCoords = sites.filter(s => s.latitude !== null && s.longitude !== null);
+        if (sitesWithCoords.length === 0) return;
+        for (let i = 0; i < photos.length; i++) {
+          const sid = nearestSiteId(photos[i], sitesWithCoords);
+          if (sid !== null) photoSiteMap.set(i, sid);
+        }
+      }
+
+      function photosForSite(siteId) {
+        if (photoSiteMap === null) buildPhotoSiteMap();
+        const result = [];
+        for (let i = 0; i < photos.length; i++) {
+          if (photoSiteMap.get(i) === siteId) result.push(photos[i]);
+        }
+        return result;
+      }
+
       // ---- Check admin status ----
       async function checkAdmin() {
         try {
@@ -623,6 +743,12 @@ export function getDashboardHtml(origin) {
           const tab = btn.dataset.tab;
           tabPhotos.hidden = tab !== 'photos';
           tabSites.hidden = tab !== 'sites';
+          // Reset to all photos when switching to photos tab
+          if (tab === 'photos') {
+            activeSiteId = null;
+            siteDetailHeader.hidden = true;
+            renderPhotos();
+          }
         });
       });
 
@@ -630,7 +756,23 @@ export function getDashboardHtml(origin) {
       const photoGrid = document.getElementById('photo-grid');
       const photosLoading = document.getElementById('photos-loading');
       const statPhotos = document.getElementById('stat-photos');
+      const siteDetailHeader = document.getElementById('site-detail-header');
+      const siteDetailName = document.getElementById('site-detail-name');
+      const siteDetailCount = document.getElementById('site-detail-count');
+      const backToSitesBtn = document.getElementById('back-to-sites-btn');
       let photos = [];
+      let activeSiteId = null; // when set, only show photos for this site
+
+      backToSitesBtn.addEventListener('click', () => {
+        activeSiteId = null;
+        siteDetailHeader.hidden = true;
+        renderPhotos();
+        // Switch back to Sites tab
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabBtns.forEach(b => { if (b.dataset.tab === 'sites') b.classList.add('active'); });
+        tabPhotos.hidden = true;
+        tabSites.hidden = false;
+      });
 
       async function fetchPhotos() {
         try {
@@ -644,22 +786,28 @@ export function getDashboardHtml(origin) {
           photos = [];
           statPhotos.textContent = '0';
         }
+        photoSiteMap = null; // invalidate cache
         renderPhotos();
       }
 
       function renderPhotos() {
         photosLoading.hidden = true;
-        if (photos.length === 0) {
+        const displayPhotos = activeSiteId !== null ? photosForSite(activeSiteId) : photos;
+
+        if (displayPhotos.length === 0) {
+          const msg = activeSiteId !== null
+            ? 'No documentation for this site yet.<br>Upload photos near this site from the mobile app.'
+            : 'No photos yet.<br>Upload photos from the mobile app.';
           photoGrid.innerHTML =
             '<div class="empty-state" style="grid-column:1/-1">' +
             '  <div class="icon">📷</div>' +
-            '  <p>No photos yet.<br>Upload photos from the mobile app.</p>' +
+            '  <p>' + msg + '</p>' +
             '</div>';
           return;
         }
 
         let html = '';
-        for (const photo of photos) {
+        for (const photo of displayPhotos) {
           const date = photo.created ? new Date(photo.created).toLocaleDateString() : '';
           const hasImage = !!photo.imageurl;
           const altText = 'Photo by ' + escapeHtml(photo.user || 'Unknown') + (photo.imagelocation ? ' at ' + escapeHtml(photo.imagelocation) : '');
@@ -698,6 +846,7 @@ export function getDashboardHtml(origin) {
           sites = [];
           statSites.textContent = '0';
         }
+        photoSiteMap = null; // invalidate cache
         renderSites();
       }
 
@@ -714,22 +863,53 @@ export function getDashboardHtml(origin) {
 
         let html = '';
         for (const site of sites) {
+          const count = photosForSite(site.id).length;
           html +=
-            '<div class="site-item">' +
+            '<div class="site-item" data-site-id="' + site.id + '">' +
             '  <div class="site-icon">🏗️</div>' +
             '  <div class="site-info">' +
             '    <div class="site-name">' + escapeHtml(site.name) + '</div>' +
             (site.description ? '    <div class="site-desc">' + escapeHtml(site.description) + '</div>' : '') +
             (site.address ? '    <div class="site-desc">📍 ' + escapeHtml(site.address) + '</div>' : '') +
+            '    <div class="site-desc">📷 ' + count + ' photo' + (count !== 1 ? 's' : '') + '</div>' +
             '  </div>' +
+            '  <div class="site-chevron">›</div>' +
             '</div>';
         }
         siteListEl.innerHTML = html;
+
+        // Attach click handlers
+        siteListEl.querySelectorAll('.site-item').forEach(el => {
+          el.addEventListener('click', () => {
+            const siteId = parseInt(el.dataset.siteId, 10);
+            showSitePhotos(siteId);
+          });
+        });
+      }
+
+      function showSitePhotos(siteId) {
+        const site = sites.find(s => s.id === siteId);
+        if (!site) return;
+
+        activeSiteId = siteId;
+        const count = photosForSite(siteId).length;
+        siteDetailName.textContent = '🏗️ ' + site.name;
+        siteDetailCount.textContent = count + ' photo' + (count !== 1 ? 's' : '') + ' near this site';
+        siteDetailHeader.hidden = false;
+
+        // Switch to photos tab
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabBtns.forEach(b => { if (b.dataset.tab === 'photos') b.classList.add('active'); });
+        tabPhotos.hidden = false;
+        tabSites.hidden = true;
+
+        renderPhotos();
       }
 
       // ---- Init ----
       checkAdmin();
-      fetchPhotos();
+      // Fetch photos first so site photo-counts are correct
+      await fetchPhotos();
       fetchSites();
     }
   </script>

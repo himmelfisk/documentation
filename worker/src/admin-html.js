@@ -509,6 +509,16 @@ export function getAdminHtml(origin) {
     }
     .btn-logout:hover { background-color: rgba(255,59,48,0.08); }
 
+    .btn-dashboard {
+      color: #fff;
+      background-color: #5856d6;
+      padding: 5px 14px;
+      font-size: 0.85rem;
+      border-radius: 6px;
+      text-decoration: none;
+    }
+    .btn-dashboard:hover { background-color: #4a48c4; }
+
     @media (prefers-color-scheme: dark) {
       .btn-logout { border-color: #ff453a; color: #ff453a; }
       .btn-logout:hover { background-color: rgba(255,69,58,0.12); }
@@ -543,6 +553,7 @@ export function getAdminHtml(origin) {
           <p>Manage construction sites and locations</p>
         </div>
         <div class="user-bar">
+          <a class="btn-dashboard" href="/">← Dashboard</a>
           <span class="user-name" id="user-name"></span>
           <button class="btn-logout" id="logout-btn">Sign out</button>
         </div>
