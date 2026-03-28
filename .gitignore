@@ -41,3 +41,4 @@ ios/App/App/capacitor.config.json
 
 # Worker dependencies
 worker/node_modules/
+node_modules/

@@ -124,8 +124,10 @@ async function handlePostPhoto(request, env, claims) {
     created = typeof meta.created === 'string' ? meta.created : now;
 
     if (imageFile && imageFile.size > 0) {
-      const ext = (imageFile.name || '').split('.').pop() || 'jpg';
-      const key = `${tenantId}/${crypto.randomUUID()}.${ext}`;
+      const mimeExtMap = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
+      const ext = mimeExtMap[imageFile.type] || 'jpg';
+      const filename = `${crypto.randomUUID()}.${ext}`;
+      const key = `${tenantId}/${filename}`;
 
       await env.BUCKET.put(key, imageFile.stream(), {
         httpMetadata: {
@@ -134,7 +136,7 @@ async function handlePostPhoto(request, env, claims) {
       });
 
       const origin = new URL(request.url).origin;
-      imageUrl = `${origin}/api/photos/image/${encodeURIComponent(tenantId)}/${key.split('/').slice(1).join('/')}`;
+      imageUrl = `${origin}/api/photos/image/${encodeURIComponent(tenantId)}/${filename}`;
     }
   } else {
     // ── JSON body (backwards-compatible) ──
@@ -175,8 +177,8 @@ async function handleGetImage(env, claims, tenantId, filename) {
     return json({ error: 'Forbidden' }, 403);
   }
 
-  // Validate filename — only allow uuid.ext pattern
-  if (!/^[0-9a-f-]+\.\w+$/i.test(filename)) {
+  // Validate filename — only allow uuid.ext pattern with known image extensions
+  if (!/^[0-9a-f-]+\.(jpg|png|webp|gif)$/i.test(filename)) {
     return json({ error: 'Bad request' }, 400);
   }
 

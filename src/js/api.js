@@ -60,7 +60,8 @@ export async function submitPhoto({ latitude, longitude, capturedAt, imageBlob }
 
   if (imageBlob) {
     // ── FormData upload (image + metadata) ──
-    const ext = imageBlob.type === 'image/png' ? 'png' : 'jpg';
+    const mimeExtMap = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
+    const ext = mimeExtMap[imageBlob.type] || 'jpg';
     const formData = new FormData();
     formData.append('image', imageBlob, `photo.${ext}`);
     formData.append('metadata', metadata);
