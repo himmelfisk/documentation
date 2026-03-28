@@ -102,8 +102,8 @@ async function init() {
 }
 
 /**
- * Fetch the organisation display name from Microsoft Graph.
- * Requires the Organisation.Read.All delegated permission to have been
+ * Fetch the organization display name from Microsoft Graph.
+ * Requires the Organization.Read.All delegated permission to have been
  * granted (admin-consent) on the app registration.  Returns null when
  * the permission is missing or the call fails for any other reason.
  */
@@ -140,9 +140,9 @@ function showApp(account) {
 
   const companyNameEl = document.getElementById('company-name');
   if (companyNameEl) {
-    fetchOrganizationName().then((name) => {
-      companyNameEl.textContent = name || '—';
-    });
+    fetchOrganizationName()
+      .then((name) => { companyNameEl.textContent = name || '—'; })
+      .catch((err) => { console.warn('Failed to fetch company name:', err); });
   }
 }
 

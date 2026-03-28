@@ -23997,6 +23997,8 @@
         if (companyNameEl) {
           fetchOrganizationName().then((name3) => {
             companyNameEl.textContent = name3 || "\u2014";
+          }).catch((err) => {
+            console.warn("Failed to fetch company name:", err);
           });
         }
       }
