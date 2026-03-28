@@ -38,3 +38,6 @@ ios/App/App/capacitor.config.json
 # Environment files
 .env
 .env.local
+
+# Worker dependencies
+worker/node_modules/
