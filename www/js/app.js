@@ -15444,7 +15444,7 @@
         };
       }
       CLIENT_ID2 = "65702384-9248-47a3-80d9-bcf5abb69424";
-      AUTHORITY = "https://login.microsoftonline.com/common";
+      AUTHORITY = "https://login.microsoftonline.com/organizations";
       msalConfig = {
         auth: {
           clientId: CLIENT_ID2,
@@ -23678,6 +23678,7 @@
     const result = { latitude: null, longitude: null, altitude: null, capturedAt: null, allTags: {} };
     try {
       const response = await fetch(imageUri);
+      if (!response.ok) throw new Error(`HTTP ${response.status} fetching image`);
       const buffer = await response.arrayBuffer();
       const tags = exif_reader_default.load(buffer, { expanded: true });
       if (tags.gps) {

@@ -54,7 +54,7 @@ if (Capacitor.getPlatform() === 'android') {
  * @see https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app
  */
 const CLIENT_ID = '65702384-9248-47a3-80d9-bcf5abb69424';
-const AUTHORITY = 'https://login.microsoftonline.com/common';
+const AUTHORITY = 'https://login.microsoftonline.com/organizations';
 
 /** Platform-aware redirect URI. */
 function getRedirectUri() {
