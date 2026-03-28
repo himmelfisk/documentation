@@ -111,44 +111,15 @@ npx --version
 
 ---
 
-## Deploying the Cloudflare Worker API
+## Deployment
 
-The backend API runs as a Cloudflare Worker. Its configuration and source code
-live in the `worker/` directory.
+### Deploy Android (APK)
 
-> **Important:** Always deploy the worker from the project root using the npm
-> script below, or from inside the `worker/` directory. Running
-> `npx wrangler deploy` from the project root **without** specifying the config
-> will fail because Wrangler cannot find `wrangler.toml` there.
+Build a debug `.apk` file and install it directly on an Android phone — no Play Store needed.
 
-**From the project root:**
+**Prerequisites:** [Android Studio](https://developer.android.com/studio) with the Android SDK.
 
-```bash
-npm run deploy:worker
-```
-
-**Or from the worker directory:**
-
-```bash
-cd worker
-npm install          # first time only
-npx wrangler deploy
-```
-
-You will need to authenticate with Cloudflare first by running `npx wrangler login`
-(from the `worker/` directory).
-
----
-
-## Building a Debug APK
-
-You can build a debug `.apk` file and install it directly on your Android
-phone for testing — no Play Store needed.
-
-### Option A — Command line (no Android Studio UI required)
-
-Make sure the web assets are up to date first, then use the Gradle wrapper
-inside the `android/` directory:
+#### Option A — Command line
 
 ```bash
 npm run build              # bundle JS
@@ -170,14 +141,14 @@ The APK will be written to:
 android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-### Option B — Android Studio
+#### Option B — Android Studio
 
 1. Open the project in Android Studio (`npx cap open android`).
 2. Go to **Build → Build Bundle(s) / APK(s) → Build APK(s)**.
 3. When the build finishes, click the **locate** link in the notification
    banner to find the APK file.
 
-### Installing the APK on your phone
+#### Installing the APK on your phone
 
 1. **Enable "Install unknown apps"** — On your phone, go to
    **Settings → Apps → Special app access → Install unknown apps** and allow
@@ -190,12 +161,79 @@ android/app/build/outputs/apk/debug/app-debug.apk
 3. **Open the app** — Find *Documentation* in your app drawer and launch it.
 
 > **Note:** A debug APK is signed with a default debug key and is intended for
-> testing only. For a release build suitable for the Play Store, see
+> testing only. For a production release, see
 > [Publishing to Google Play Store](#publishing-to-google-play-store).
 
 ---
 
-## Installing on Android
+### Deploy iOS
+
+Build and install the app on a physical iOS device or simulator — no App Store needed.
+
+**Prerequisites:** macOS with [Xcode](https://developer.apple.com/xcode/) installed, plus the Xcode Command Line Tools (`xcode-select --install`). A free Apple ID is enough for on-device testing, but the app will expire after 7 days without an Apple Developer Program membership.
+
+#### Build & run on a device or simulator
+
+```bash
+npm run build          # bundle JS
+npx cap sync ios       # copy web assets into the iOS project
+npx cap open ios       # open the project in Xcode
+```
+
+Then in Xcode:
+
+1. Select the **App** target, go to **Signing & Capabilities**, and choose your development team (your Apple ID).
+2. Select your target device or simulator in the toolbar.
+3. Click **Run ▶** (or press <kbd>⌘R</kbd>) to build and install the app.
+
+#### Creating an IPA for ad-hoc distribution
+
+If you want to share the build with others without the App Store:
+
+1. In Xcode, select **Any iOS Device** as the build destination.
+2. Go to **Product → Archive**.
+3. When the archive completes, the **Organizer** window opens. Select the archive and click **Distribute App**.
+4. Choose **Custom → Ad Hoc** (or **Development**), then follow the prompts to export a signed `.ipa` file.
+5. Install the `.ipa` on a device using Apple Configurator, Finder (drag to the device), or a third-party tool like Diawi.
+
+> **Note:** For a production release, see
+> [Publishing to Apple's App Store](#publishing-to-apples-app-store).
+
+---
+
+### Deploy Web (Cloudflare Worker)
+
+The backend API and admin panel (`/admin`) run as a single Cloudflare Worker.
+Its source code and configuration live in the `worker/` directory.
+
+**Prerequisites:** A [Cloudflare](https://www.cloudflare.com/) account. Authenticate with `npx wrangler login` (run from the `worker/` directory).
+
+> **Important:** Always deploy the worker from the project root using the npm
+> script below, or from inside the `worker/` directory. Running
+> `npx wrangler deploy` from the project root **without** specifying the config
+> will fail because Wrangler cannot find `wrangler.toml` there.
+
+**From the project root:**
+
+```bash
+npm run deploy:worker
+```
+
+**Or from the worker directory:**
+
+```bash
+cd worker
+npm install          # first time only
+npx wrangler deploy
+```
+
+Once deployed, the worker is live at
+`https://documentation-api.<your-subdomain>.workers.dev` with the admin panel
+at `/admin`.
+
+---
+
+## Running Locally (Android)
 
 1. **Install prerequisites** – Install [Node.js](https://nodejs.org/) (v18+) and [Android Studio](https://developer.android.com/studio) with the Android SDK.
 2. **Clone the repository and install dependencies:**
@@ -214,7 +252,7 @@ android/app/build/outputs/apk/debug/app-debug.apk
    ```
 5. **Run on a device or emulator** – In Android Studio, select your target device and click **Run ▶**. To use a physical device, enable *USB debugging* in the device's Developer Options and connect it via USB.
 
-## Installing on iOS
+## Running Locally (iOS)
 
 > **Note:** Building for iOS requires a Mac with [Xcode](https://developer.apple.com/xcode/) installed.
 
