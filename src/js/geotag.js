@@ -267,9 +267,17 @@ export async function ensureGeolocationPermission() {
 
     // status is 'prompt' or 'prompt-with-rationale' — request permission
     console.log('Requesting geolocation permission…');
-    status = await Geolocation.requestPermissions({ permissions: ['location'] });
-    console.log('Geolocation requestPermissions result:', JSON.stringify(status));
-    return status.location === 'granted' || status.coarseLocation === 'granted';
+    try {
+      status = await Geolocation.requestPermissions({ permissions: ['location'] });
+      console.log('Geolocation requestPermissions result:', JSON.stringify(status));
+      return status.location === 'granted' || status.coarseLocation === 'granted';
+    } catch (requestErr) {
+      // On web, requestPermissions() is not implemented and throws.
+      // Return true so that getCurrentPosition() can still run — the browser
+      // will show its own permission prompt at that point.
+      console.log('requestPermissions unavailable, will prompt on first use:', requestErr);
+      return true;
+    }
   } catch (err) {
     console.warn('Geolocation permission check/request failed:', err);
     return false;

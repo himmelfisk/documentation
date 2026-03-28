@@ -23754,9 +23754,14 @@
         return false;
       }
       console.log("Requesting geolocation permission\u2026");
-      status = await Geolocation2.requestPermissions({ permissions: ["location"] });
-      console.log("Geolocation requestPermissions result:", JSON.stringify(status));
-      return status.location === "granted" || status.coarseLocation === "granted";
+      try {
+        status = await Geolocation2.requestPermissions({ permissions: ["location"] });
+        console.log("Geolocation requestPermissions result:", JSON.stringify(status));
+        return status.location === "granted" || status.coarseLocation === "granted";
+      } catch (requestErr) {
+        console.log("requestPermissions unavailable, will prompt on first use:", requestErr);
+        return true;
+      }
     } catch (err) {
       console.warn("Geolocation permission check/request failed:", err);
       return false;
