@@ -231,6 +231,48 @@ Once deployed, the worker is live at
 `https://documentation-api.<your-subdomain>.workers.dev` with the admin panel
 at `/admin`.
 
+### Azure AD (Microsoft Entra ID) App Registration
+
+The app uses [MSAL.js](https://github.com/AzureAD/microsoft-authentication-library-for-js)
+for Microsoft login. The Azure AD app registration **must** be configured
+correctly or you will get an `AADSTS9002326` error when trying to sign in.
+
+1. Go to the [Azure Portal](https://portal.azure.com/) → **Microsoft Entra ID** →
+   **App registrations** and find (or create) the app.
+2. Go to **Authentication** → **Add a platform** → choose **Single-page
+   application** (not "Web").
+3. Add the following **redirect URIs** under the **Single-page application**
+   platform:
+
+   | URI | Used by |
+   |---|---|
+   | `https://documentation-api.<your-subdomain>.workers.dev` | Dashboard (`/`) |
+   | `https://documentation-api.<your-subdomain>.workers.dev/admin` | Admin panel (`/admin`) |
+   | `http://localhost:8787` | Local development (`wrangler dev`) |
+   | `http://localhost:8787/admin` | Local development admin |
+
+4. Under **API permissions**, make sure `User.Read` (Microsoft Graph, delegated)
+   is granted.
+5. Under **Supported account types**, select **Accounts in any organizational
+   directory (Any Microsoft Entra ID tenant – Multitenant)** to match the
+   `/organizations` authority used in the MSAL config.
+
+> **⚠️ Common mistake:** If the redirect URIs are registered under the **Web**
+> platform instead of **Single-page application**, Azure AD will reject the
+> token request with:
+>
+> `AADSTS9002326: Cross-origin token redemption is permitted only for the
+> 'Single-Page Application' client-type.`
+>
+> To fix this, remove the URIs from the **Web** section and re-add them under
+> **Single-page application**.
+
+For the mobile app (Capacitor), add the following redirect URIs under the
+**Mobile and desktop applications** platform:
+
+- `https://localhost` (Android)
+- `capacitor://localhost` (iOS)
+
 ---
 
 ## Running Locally (Android)

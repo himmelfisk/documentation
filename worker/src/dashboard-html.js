@@ -500,7 +500,20 @@ export function getDashboardHtml(origin) {
     await pca.initialize();
 
     // Process redirect response
-    const authResponse = await pca.handleRedirectPromise();
+    let authResponse;
+    try {
+      authResponse = await pca.handleRedirectPromise();
+    } catch (err) {
+      // AADSTS9002326: redirect URI registered as "Web" instead of "SPA"
+      if (err.errorCode === 'invalid_request' || (err.message && err.message.includes('AADSTS9002326'))) {
+        document.getElementById('login-status').textContent =
+          'Azure AD configuration error: the redirect URI must be registered ' +
+          'as a "Single-page application" (not "Web") in the Azure app registration. ' +
+          'See the README for setup instructions.';
+        document.getElementById('login-btn').disabled = true;
+      }
+      throw err;
+    }
     if (authResponse && authResponse.account) {
       pca.setActiveAccount(authResponse.account);
     } else {
