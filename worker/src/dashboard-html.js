@@ -517,6 +517,30 @@ export function getDashboardHtml(origin) {
 
     .lightbox-close:hover { opacity: 1; }
 
+    .lightbox-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 2.2rem;
+      color: #fff;
+      background: rgba(255,255,255,0.13);
+      border: none;
+      cursor: pointer;
+      z-index: 2001;
+      line-height: 1;
+      padding: 12px 10px;
+      border-radius: 50%;
+      opacity: 0.7;
+      transition: opacity 0.15s, background 0.15s;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .lightbox-nav:hover { opacity: 1; background: rgba(255,255,255,0.22); }
+
+    .lightbox-prev { left: 12px; }
+    .lightbox-next { right: 12px; }
+
     /* Make photo cards indicate they are clickable for fullscreen */
     .photo-card img { cursor: zoom-in; }
   </style>
@@ -599,7 +623,9 @@ export function getDashboardHtml(origin) {
   <!-- Fullscreen lightbox overlay -->
   <div class="lightbox-overlay" id="lightbox-overlay">
     <button class="lightbox-close" id="lightbox-close" aria-label="Close">&times;</button>
+    <button class="lightbox-nav lightbox-prev" id="lightbox-prev" aria-label="Previous photo">&#8249;</button>
     <img class="lightbox-img" id="lightbox-img" alt="Full size image">
+    <button class="lightbox-nav lightbox-next" id="lightbox-next" aria-label="Next photo">&#8250;</button>
   </div>
 
   <script type="module">
@@ -930,17 +956,39 @@ export function getDashboardHtml(origin) {
       const lightboxOverlay = document.getElementById('lightbox-overlay');
       const lightboxImg = document.getElementById('lightbox-img');
       const lightboxClose = document.getElementById('lightbox-close');
+      const lightboxPrev = document.getElementById('lightbox-prev');
+      const lightboxNext = document.getElementById('lightbox-next');
+      let lightboxIndex = -1;
+      let lightboxImages = [];
 
       function openLightbox(imgEl) {
         if (!imgEl.src || imgEl.src.startsWith('data:')) return;
+        lightboxImages = Array.from(photoGrid.querySelectorAll('.photo-card img[src]')).filter(img => !img.src.startsWith('data:'));
+        lightboxIndex = lightboxImages.indexOf(imgEl);
         lightboxImg.src = imgEl.src;
         lightboxOverlay.classList.add('active');
         document.body.style.overflow = 'hidden';
+        updateLightboxNav();
+      }
+
+      function updateLightboxNav() {
+        lightboxPrev.style.display = lightboxIndex > 0 ? '' : 'none';
+        lightboxNext.style.display = lightboxIndex < lightboxImages.length - 1 ? '' : 'none';
+      }
+
+      function navigateLightbox(direction) {
+        const newIndex = lightboxIndex + direction;
+        if (newIndex < 0 || newIndex >= lightboxImages.length) return;
+        lightboxIndex = newIndex;
+        lightboxImg.src = lightboxImages[lightboxIndex].src;
+        updateLightboxNav();
       }
 
       function closeLightbox() {
         lightboxOverlay.classList.remove('active');
         document.body.style.overflow = '';
+        lightboxIndex = -1;
+        lightboxImages = [];
       }
 
       photoGrid.addEventListener('click', (e) => {
@@ -956,13 +1004,18 @@ export function getDashboardHtml(origin) {
       });
 
       lightboxClose.addEventListener('click', closeLightbox);
+      lightboxPrev.addEventListener('click', () => navigateLightbox(-1));
+      lightboxNext.addEventListener('click', () => navigateLightbox(1));
 
       lightboxOverlay.addEventListener('click', (e) => {
         if (e.target === lightboxOverlay) closeLightbox();
       });
 
       document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && lightboxOverlay.classList.contains('active')) closeLightbox();
+        if (!lightboxOverlay.classList.contains('active')) return;
+        if (e.key === 'Escape') closeLightbox();
+        if (e.key === 'ArrowLeft') navigateLightbox(-1);
+        if (e.key === 'ArrowRight') navigateLightbox(1);
       });
 
       // ---- Sites ----
@@ -999,7 +1052,8 @@ export function getDashboardHtml(origin) {
         }
 
         let html = '';
-        for (const site of sites) {
+        const sortedSites = [...sites].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        for (const site of sortedSites) {
           const count = photosForSite(site.id).length;
           html +=
             '<div class="site-item" data-site-id="' + site.id + '">' +
