@@ -36,7 +36,7 @@ const jwks = createRemoteJWKSet(JWKS_URL);
  * SECURITY: This must remain a hardcoded string literal — never derived
  * from user input, request parameters, or environment variables.
  */
-const TABLE = 'photos';
+const TABLE = 'Documentation';
 
 // ---------------------------------------------------------------------------
 // Helpers
