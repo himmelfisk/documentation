@@ -649,10 +649,11 @@ export function getDashboardHtml(origin) {
         for (const photo of photos) {
           const date = photo.created ? new Date(photo.created).toLocaleDateString() : '';
           const hasImage = !!photo.imageurl;
+          const altText = 'Photo by ' + escapeHtml(photo.user || 'Unknown') + (photo.imagelocation ? ' at ' + escapeHtml(photo.imagelocation) : '');
           html +=
             '<div class="photo-card">' +
             (hasImage
-              ? '<img src="' + escapeHtml(photo.imageurl) + '" alt="Photo" loading="lazy">'
+              ? '<img src="' + escapeHtml(photo.imageurl) + '" alt="' + altText + '" loading="lazy">'
               : '<div style="height:160px;display:flex;align-items:center;justify-content:center;background:#e8e8e8;color:#aaa;font-size:2rem">📷</div>') +
             '  <div class="photo-meta">' +
             '    <div class="photo-user">' + escapeHtml(photo.user || 'Unknown') + '</div>' +

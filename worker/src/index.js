@@ -366,7 +366,7 @@ export default {
         .split(',')
         .map(e => e.trim().toLowerCase())
         .filter(Boolean);
-      const isAdmin = adminList.includes(email);
+      const isAdmin = email !== '' && adminList.includes(email);
 
       return json({
         name: claims.name || '',
