@@ -10,3 +10,8 @@ database_id = "aba7ed26-dafa-4f29-b8a6-892c54a8b239"
 [[r2_buckets]]
 binding = "BUCKET"
 bucket_name = "documentation"
+
+[vars]
+# Comma-separated list of email addresses that can access the /admin panel.
+# These must match the "preferred_username" claim from the Microsoft ID token.
+ADMIN_EMAILS = ""

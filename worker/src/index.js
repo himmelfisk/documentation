@@ -16,6 +16,7 @@
 
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { getAdminHtml } from './admin-html.js';
+import { getDashboardHtml } from './dashboard-html.js';
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -339,10 +340,39 @@ export default {
 
     const url = new URL(request.url);
 
-    // ---- Admin panel (no auth) ----
+    // ---- Dashboard (no auth — MSAL handles login in-browser) ----
+    if (url.pathname === '/' || url.pathname === '') {
+      return new Response(getDashboardHtml(url.origin), {
+        headers: { 'Content-Type': 'text/html; charset=utf-8', ...CORS_HEADERS },
+      });
+    }
+
+    // ---- Admin panel (no auth — MSAL handles login in-browser) ----
     if (url.pathname === '/admin' || url.pathname === '/admin/') {
       return new Response(getAdminHtml(url.origin), {
         headers: { 'Content-Type': 'text/html; charset=utf-8', ...CORS_HEADERS },
+      });
+    }
+
+    // ---- /api/me — user info + admin check ----
+    if (url.pathname === '/api/me' && request.method === 'GET') {
+      const claims = await authenticate(request);
+      if (!claims) {
+        return json({ error: 'Unauthorized' }, 401);
+      }
+
+      const email = (claims.preferred_username || claims.email || '').toLowerCase();
+      const adminList = (env.ADMIN_EMAILS || '')
+        .split(',')
+        .map(e => e.trim().toLowerCase())
+        .filter(Boolean);
+      const isAdmin = adminList.includes(email);
+
+      return json({
+        name: claims.name || '',
+        email: email,
+        tenantId: claims.tid,
+        isAdmin,
       });
     }
 
