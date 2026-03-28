@@ -799,26 +799,34 @@ export function getDashboardHtml(origin) {
       }
 
       /**
-       * Fetch images that require JWT auth and set their src to blob URLs.
-       * Browser <img> tags cannot send Authorization headers natively, so
-       * we fetch each image via authFetch() and convert to a blob URL.
+       * Fetch a single image that requires JWT auth and set its src to a
+       * blob URL.  Browser <img> tags cannot send Authorization headers
+       * natively, so we use authFetch() and convert to a blob URL.
        */
-      async function loadAuthImages() {
-        const images = photoGrid.querySelectorAll('img[data-auth-src]');
-        await Promise.allSettled([...images].map(async (img) => {
-          const url = img.getAttribute('data-auth-src');
-          try {
-            const res = await authFetch(url);
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            const blob = await res.blob();
-            const blobUrl = URL.createObjectURL(blob);
-            activeBlobUrls.push(blobUrl);
-            img.src = blobUrl;
-          } catch {
-            img.alt = 'Failed to load image';
-          }
-        }));
+      async function loadAuthImage(img) {
+        const url = img.getAttribute('data-auth-src');
+        try {
+          const res = await authFetch(url);
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          const blob = await res.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          activeBlobUrls.push(blobUrl);
+          img.src = blobUrl;
+        } catch (err) {
+          console.warn('Failed to load image', url, err);
+          img.alt = 'Failed to load image';
+        }
       }
+
+      // Lazy-load authenticated images as they scroll into view
+      const imageObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            imageObserver.unobserve(entry.target);
+            loadAuthImage(entry.target);
+          }
+        });
+      }, { rootMargin: '200px' });
 
       function renderPhotos() {
         photosLoading.hidden = true;
@@ -857,7 +865,7 @@ export function getDashboardHtml(origin) {
             '</div>';
         }
         photoGrid.innerHTML = html;
-        loadAuthImages();
+        photoGrid.querySelectorAll('img[data-auth-src]').forEach(img => imageObserver.observe(img));
       }
 
       // ---- Sites ----
