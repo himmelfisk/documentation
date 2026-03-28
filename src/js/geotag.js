@@ -244,22 +244,35 @@ function flattenExifTags(tags) {
  * Ensure the app has geolocation permissions, requesting them if needed.
  * Returns true when permission is granted, false otherwise.
  *
+ * Wrapped in a try-catch because Capacitor's checkPermissions() and
+ * requestPermissions() throw when system location services are disabled.
+ *
  * @returns {Promise<boolean>}
  */
 export async function ensureGeolocationPermission() {
-  let status = await Geolocation.checkPermissions();
-  if (status.location === 'granted' || status.coarseLocation === 'granted') {
-    return true;
-  }
+  try {
+    let status = await Geolocation.checkPermissions();
+    console.log('Geolocation checkPermissions result:', JSON.stringify(status));
 
-  if (status.location === 'denied') {
-    // On some platforms 'denied' means permanently denied; requesting again won't help
+    if (status.location === 'granted' || status.coarseLocation === 'granted') {
+      return true;
+    }
+
+    if (status.location === 'denied') {
+      // On some platforms 'denied' means permanently denied; requesting again won't help
+      console.warn('Geolocation permission is denied');
+      return false;
+    }
+
+    // status is 'prompt' or 'prompt-with-rationale' — request permission
+    console.log('Requesting geolocation permission…');
+    status = await Geolocation.requestPermissions({ permissions: ['location'] });
+    console.log('Geolocation requestPermissions result:', JSON.stringify(status));
+    return status.location === 'granted' || status.coarseLocation === 'granted';
+  } catch (err) {
+    console.warn('Geolocation permission check/request failed:', err);
     return false;
   }
-
-  // status is 'prompt' or 'prompt-with-rationale' — request permission
-  status = await Geolocation.requestPermissions({ permissions: ['location'] });
-  return status.location === 'granted' || status.coarseLocation === 'granted';
 }
 
 /**
@@ -281,6 +294,8 @@ export async function getDevicePosition() {
       enableHighAccuracy: true,
       timeout: 10000,
     });
+
+    console.log('Device position:', JSON.stringify(position));
 
     result.latitude = position.coords.latitude;
     result.longitude = position.coords.longitude;
@@ -313,6 +328,9 @@ export async function collectGeotagData(imageUri, cameraExif) {
     extractExifGeodata(imageUri, cameraExif),
     getDevicePosition(),
   ]);
+
+  console.log('EXIF geodata:', JSON.stringify(exif, null, 2));
+  console.log('Device position result:', JSON.stringify(device, null, 2));
 
   const now = new Date().toISOString();
   const allTags = exif.allTags || {};
