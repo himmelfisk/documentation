@@ -790,8 +790,47 @@ export function getDashboardHtml(origin) {
         renderPhotos();
       }
 
+      // Revoke previously created blob URLs to free memory
+      let activeBlobUrls = [];
+
+      function revokeActiveBlobUrls() {
+        activeBlobUrls.forEach(u => URL.revokeObjectURL(u));
+        activeBlobUrls = [];
+      }
+
+      /**
+       * Fetch a single image that requires JWT auth and set its src to a
+       * blob URL.  Browser <img> tags cannot send Authorization headers
+       * natively, so we use authFetch() and convert to a blob URL.
+       */
+      async function loadAuthImage(img) {
+        const url = img.getAttribute('data-auth-src');
+        try {
+          const res = await authFetch(url);
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          const blob = await res.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          activeBlobUrls.push(blobUrl);
+          img.src = blobUrl;
+        } catch (err) {
+          console.warn('Failed to load image', url, err);
+          img.alt = 'Failed to load image';
+        }
+      }
+
+      // Lazy-load authenticated images as they scroll into view
+      const imageObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            imageObserver.unobserve(entry.target);
+            loadAuthImage(entry.target);
+          }
+        });
+      }, { rootMargin: '200px' });
+
       function renderPhotos() {
         photosLoading.hidden = true;
+        revokeActiveBlobUrls();
         const displayPhotos = activeSiteId !== null ? photosForSite(activeSiteId) : photos;
 
         if (displayPhotos.length === 0) {
@@ -814,7 +853,7 @@ export function getDashboardHtml(origin) {
           html +=
             '<div class="photo-card">' +
             (hasImage
-              ? '<img src="' + escapeHtml(photo.imageurl) + '" alt="' + altText + '" loading="lazy">'
+              ? '<img data-auth-src="' + escapeHtml(photo.imageurl) + '" alt="' + altText + '">'
               : '<div style="height:160px;display:flex;align-items:center;justify-content:center;background:#e8e8e8;color:#aaa;font-size:2rem">📷</div>') +
             '  <div class="photo-meta">' +
             '    <div class="photo-user">' + escapeHtml(photo.user || 'Unknown') + '</div>' +
@@ -826,6 +865,7 @@ export function getDashboardHtml(origin) {
             '</div>';
         }
         photoGrid.innerHTML = html;
+        photoGrid.querySelectorAll('img[data-auth-src]').forEach(img => imageObserver.observe(img));
       }
 
       // ---- Sites ----
