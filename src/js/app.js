@@ -3,7 +3,7 @@ import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { initAuth, login, logout, getAccessTokenSilent } from './auth.js';
 import { initI18n, t } from './i18n.js';
 import { collectGeotagData, ensureGeolocationPermission } from './geotag.js';
-import { submitPhotoMetadata } from './api.js';
+import { submitPhoto } from './api.js';
 
 async function init() {
   initI18n();
@@ -86,18 +86,28 @@ async function init() {
           metadataContainer.hidden = false;
           metadataContainer.textContent = t('metadata.loading');
 
+          // Fetch the image blob for R2 upload
+          let imageBlob = null;
+          try {
+            const blobResp = await fetch(imageSrc);
+            imageBlob = await blobResp.blob();
+          } catch (blobErr) {
+            console.warn('Could not fetch image blob for upload:', blobErr);
+          }
+
           try {
             const geotag = await collectGeotagData(imageSrc, photo.exif);
             console.log('Geotag metadata:', geotag);
             renderMetadata(metadataContainer, geotag);
 
-            // Upload metadata to backend
+            // Upload photo + metadata to backend
             showUploadStatus('pending');
             try {
-              await submitPhotoMetadata({
+              await submitPhoto({
                 latitude: geotag.latitude,
                 longitude: geotag.longitude,
                 capturedAt: geotag.capturedAt,
+                imageBlob,
               });
               showUploadStatus('success');
             } catch (uploadErr) {
