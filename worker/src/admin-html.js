@@ -424,15 +424,129 @@ export function getAdminHtml(origin) {
     }
     .map-coords .clear-pin:hover { text-decoration: underline; }
 
+    /* ---- Login screen ---- */
+    .login-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    .login-card {
+      text-align: center;
+      max-width: 380px;
+      width: 100%;
+    }
+
+    .login-card .icon { font-size: 3rem; margin-bottom: 16px; }
+
+    .login-card h1 { font-size: 1.5rem; margin-bottom: 8px; }
+
+    .login-card p {
+      color: #888;
+      font-size: 0.95rem;
+      margin-bottom: 28px;
+    }
+
+    .btn-login {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 28px;
+      font-size: 1rem;
+      font-family: inherit;
+      font-weight: 600;
+      color: #fff;
+      background-color: #0078d4;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.15s;
+    }
+    .btn-login:hover { background-color: #106ebe; }
+    .btn-login:active { background-color: #005a9e; }
+
+    .login-card .login-status {
+      margin-top: 16px;
+      font-size: 0.85rem;
+      color: #888;
+    }
+
+    /* ---- User bar in header ---- */
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.85rem;
+      color: #888;
+    }
+
+    .user-bar .user-name {
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .btn-logout {
+      padding: 5px 12px;
+      font-size: 0.8rem;
+      font-family: inherit;
+      color: #ff3b30;
+      background: none;
+      border: 1px solid #ff3b30;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.15s;
+    }
+    .btn-logout:hover { background-color: rgba(255,59,48,0.08); }
+
+    @media (prefers-color-scheme: dark) {
+      .btn-logout { border-color: #ff453a; color: #ff453a; }
+      .btn-logout:hover { background-color: rgba(255,69,58,0.12); }
+    }
+
     /* ---- Hidden ---- */
     [hidden] { display: none !important; }
   </style>
 </head>
 <body>
+  <!-- Login screen (shown when not authenticated) -->
+  <div class="login-screen" id="login-screen">
+    <div class="login-card">
+      <div class="icon">🏗️</div>
+      <h1>Site Admin</h1>
+      <p>Sign in with your Microsoft account to manage sites</p>
+      <button class="btn-login" id="login-btn" disabled>
+        <svg width="20" height="20" viewBox="0 0 21 21" fill="none"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>
+        Sign in with Microsoft
+      </button>
+      <div class="login-status" id="login-status">Loading…</div>
+    </div>
+  </div>
+
+  <!-- Admin content (hidden until authenticated) -->
+  <div id="admin-content" hidden>
   <div class="container">
     <header>
-      <h1>🏗️ Site Admin</h1>
-      <p>Manage construction sites and locations</p>
+      <div class="header-row">
+        <div>
+          <h1>🏗️ Site Admin</h1>
+          <p>Manage construction sites and locations</p>
+        </div>
+        <div class="user-bar">
+          <span class="user-name" id="user-name"></span>
+          <button class="btn-logout" id="logout-btn">Sign out</button>
+        </div>
+      </div>
     </header>
 
     <!-- Site form (add / edit) -->
@@ -487,7 +601,9 @@ export function getAdminHtml(origin) {
         <div class="loading" id="loading-indicator">Loading sites…</div>
       </div>
     </div>
-  </div>
+
+  </div> <!-- /.container -->
+  </div> <!-- /#admin-content -->
 
   <!-- Delete confirmation -->
   <div class="overlay" id="delete-overlay">
@@ -504,8 +620,76 @@ export function getAdminHtml(origin) {
   <!-- Toast notification -->
   <div class="toast" id="toast"></div>
 
-  <script>
-    (() => {
+  <script type="module">
+    import { PublicClientApplication } from 'https://cdn.jsdelivr.net/npm/@azure/msal-browser@5.6.1/+esm';
+
+    // ---- MSAL configuration ----
+    const CLIENT_ID = '65702384-9248-47a3-80d9-bcf5abb69424';
+    const msalConfig = {
+      auth: {
+        clientId: CLIENT_ID,
+        authority: 'https://login.microsoftonline.com/organizations',
+        redirectUri: window.location.origin + '/admin',
+        postLogoutRedirectUri: window.location.origin + '/admin',
+        navigateToLoginRequestUrl: false,
+      },
+      cache: { cacheLocation: 'localStorage' },
+    };
+    const loginRequest = { scopes: ['User.Read'] };
+
+    const pca = new PublicClientApplication(msalConfig);
+    await pca.initialize();
+
+    // Process redirect response
+    const authResponse = await pca.handleRedirectPromise();
+    if (authResponse && authResponse.account) {
+      pca.setActiveAccount(authResponse.account);
+    } else {
+      const accounts = pca.getAllAccounts();
+      if (accounts.length > 0) pca.setActiveAccount(accounts[0]);
+    }
+
+    async function getIdToken() {
+      const account = pca.getActiveAccount();
+      if (!account) return null;
+      try {
+        const result = await pca.acquireTokenSilent({ ...loginRequest, account });
+        return result.idToken;
+      } catch {
+        return null;
+      }
+    }
+
+    // ---- Auth-gated UI ----
+    const loginScreen = document.getElementById('login-screen');
+    const loginBtn = document.getElementById('login-btn');
+    const loginStatus = document.getElementById('login-status');
+    const adminContent = document.getElementById('admin-content');
+    const userNameEl = document.getElementById('user-name');
+    const logoutBtn = document.getElementById('logout-btn');
+
+    const account = pca.getActiveAccount();
+    if (account) {
+      loginScreen.hidden = true;
+      adminContent.hidden = false;
+      userNameEl.textContent = account.name || account.username || '';
+    } else {
+      loginStatus.textContent = 'Not signed in';
+      loginBtn.disabled = false;
+    }
+
+    loginBtn.addEventListener('click', () => {
+      loginBtn.disabled = true;
+      loginStatus.textContent = 'Redirecting…';
+      pca.loginRedirect(loginRequest);
+    });
+
+    logoutBtn.addEventListener('click', () => {
+      pca.logoutRedirect();
+    });
+
+    // ---- Sites admin (only runs when authenticated) ----
+    if (account) {
       const API = '${origin}/api/sites';
       let sites = [];
       let deleteTargetId = null;
@@ -547,9 +731,21 @@ export function getAdminHtml(origin) {
       }
 
       // ---- API helpers ----
+      async function authFetch(url, options = {}) {
+        const token = await getIdToken();
+        if (!token) {
+          showToast('Session expired — please sign in again', 'error');
+          setTimeout(() => pca.loginRedirect(loginRequest), 1500);
+          throw new Error('No token');
+        }
+        if (!options.headers) options.headers = {};
+        options.headers['Authorization'] = 'Bearer ' + token;
+        return fetch(url, options);
+      }
+
       async function fetchSites() {
         try {
-          const res = await fetch(API);
+          const res = await authFetch(API);
           if (!res.ok) throw new Error('Failed to load sites');
           const data = await res.json();
           sites = data.sites || [];
@@ -565,7 +761,7 @@ export function getAdminHtml(origin) {
         const url = isEdit ? API + '/' + siteData.id : API;
         const method = isEdit ? 'PUT' : 'POST';
 
-        const res = await fetch(url, {
+        const res = await authFetch(url, {
           method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(siteData),
@@ -579,7 +775,7 @@ export function getAdminHtml(origin) {
       }
 
       async function deleteSite(id) {
-        const res = await fetch(API + '/' + id, { method: 'DELETE' });
+        const res = await authFetch(API + '/' + id, { method: 'DELETE' });
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
           throw new Error(err.error || 'Failed to delete site');
@@ -796,7 +992,7 @@ export function getAdminHtml(origin) {
 
       // ---- Init ----
       fetchSites();
-    })();
+    }
   </script>
 </body>
 </html>`;
