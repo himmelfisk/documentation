@@ -14,4 +14,4 @@ bucket_name = "documentation"
 [vars]
 # Comma-separated list of email addresses that can access the /admin panel.
 # These must match the "preferred_username" claim from the Microsoft ID token.
-ADMIN_EMAILS = ""
+ADMIN_EMAILS = "kenneth@invo.no"
