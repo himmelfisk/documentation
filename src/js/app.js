@@ -66,7 +66,7 @@ async function init() {
         // Request location permission before opening the camera so that:
         // 1. On iOS, the camera can embed GPS in the photo's EXIF metadata
         // 2. Device GPS fallback is ready immediately after capture
-        ensureGeolocationPermission().catch(() => {});
+        await ensureGeolocationPermission();
 
         const photo = await Camera.getPhoto({
           resultType: CameraResultType.Uri,
