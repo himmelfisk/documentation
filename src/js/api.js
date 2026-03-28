@@ -20,7 +20,7 @@ import { getIdToken } from './auth.js';
  *
  * Example: 'https://documentation-api.your-subdomain.workers.dev'
  */
-const API_BASE = 'https://documentation-api.himmelfisk.workers.dev';
+const API_BASE = 'https://documentation-api.k-a-lorgen.workers.dev';
 
 // ---------------------------------------------------------------------------
 // Public API

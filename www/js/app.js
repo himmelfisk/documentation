@@ -23933,7 +23933,7 @@
   var init_api = __esm({
     "src/js/api.js"() {
       init_auth();
-      API_BASE = "https://documentation-api.himmelfisk.workers.dev";
+      API_BASE = "https://documentation-api.k-a-lorgen.workers.dev";
     }
   });
 
