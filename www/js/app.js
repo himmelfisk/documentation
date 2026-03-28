@@ -23767,26 +23767,51 @@
       return false;
     }
   }
+  function webViewGetCurrentPosition() {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error("navigator.geolocation not available"));
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(resolve, reject, {
+        enableHighAccuracy: true,
+        timeout: 15e3,
+        maximumAge: 0
+      });
+    });
+  }
   async function getDevicePosition() {
     const result = { latitude: null, longitude: null, altitude: null, accuracy: null, capturedAt: null };
     try {
       const granted = await ensureGeolocationPermission();
       if (!granted) {
-        console.warn("Geolocation permission not granted");
+        console.warn("Geolocation permission not granted via Capacitor plugin");
+      } else {
+        const position = await Geolocation2.getCurrentPosition({
+          enableHighAccuracy: true,
+          timeout: 1e4
+        });
+        console.log("Device position (Capacitor):", JSON.stringify(position));
+        result.latitude = position.coords.latitude;
+        result.longitude = position.coords.longitude;
+        result.altitude = position.coords.altitude;
+        result.accuracy = position.coords.accuracy;
+        result.capturedAt = new Date(position.timestamp).toISOString();
         return result;
       }
-      const position = await Geolocation2.getCurrentPosition({
-        enableHighAccuracy: true,
-        timeout: 1e4
-      });
-      console.log("Device position:", JSON.stringify(position));
+    } catch (err) {
+      console.warn("Capacitor Geolocation plugin failed, trying WebView fallback:", err);
+    }
+    try {
+      const position = await webViewGetCurrentPosition();
+      console.log("Device position (WebView fallback):", JSON.stringify(position));
       result.latitude = position.coords.latitude;
       result.longitude = position.coords.longitude;
       result.altitude = position.coords.altitude;
       result.accuracy = position.coords.accuracy;
       result.capturedAt = new Date(position.timestamp).toISOString();
     } catch (err) {
-      console.warn("Device geolocation failed:", err);
+      console.warn("WebView geolocation fallback also failed:", err);
     }
     return result;
   }
