@@ -3,6 +3,7 @@ import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { initAuth, login, logout, getAccessTokenSilent } from './auth.js';
 import { initI18n, t } from './i18n.js';
 import { collectGeotagData, ensureGeolocationPermission } from './geotag.js';
+import { submitPhotoMetadata } from './api.js';
 
 async function init() {
   initI18n();
@@ -89,6 +90,20 @@ async function init() {
             const geotag = await collectGeotagData(imageSrc, photo.exif);
             console.log('Geotag metadata:', geotag);
             renderMetadata(metadataContainer, geotag);
+
+            // Upload metadata to backend
+            showUploadStatus('pending');
+            try {
+              await submitPhotoMetadata({
+                latitude: geotag.latitude,
+                longitude: geotag.longitude,
+                capturedAt: geotag.capturedAt,
+              });
+              showUploadStatus('success');
+            } catch (uploadErr) {
+              console.error('Upload failed:', uploadErr);
+              showUploadStatus('error', uploadErr.message);
+            }
           } catch (geoErr) {
             console.warn('Geotag collection failed:', geoErr);
             metadataContainer.textContent = t('metadata.unavailable');
@@ -164,6 +179,27 @@ function showLoginError(err) {
   if (el) {
     el.textContent = err.message || String(err);
     el.hidden = false;
+  }
+}
+
+/**
+ * Show the upload status indicator.
+ *
+ * @param {'pending'|'success'|'error'} status
+ * @param {string} [detail]  Optional error detail
+ */
+function showUploadStatus(status, detail) {
+  const el = document.getElementById('upload-status');
+  if (!el) return;
+  el.hidden = false;
+  el.className = 'upload-status upload-' + status;
+
+  if (status === 'pending') {
+    el.textContent = t('upload.pending');
+  } else if (status === 'success') {
+    el.textContent = t('upload.success');
+  } else {
+    el.textContent = t('upload.error') + (detail ? ` (${detail})` : '');
   }
 }
 

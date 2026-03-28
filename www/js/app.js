@@ -15440,6 +15440,20 @@
       return null;
     }
   }
+  async function getIdToken() {
+    if (!msalInstance) return null;
+    const account = getAccount2();
+    if (!account) return null;
+    try {
+      const result = await msalInstance.acquireTokenSilent({
+        ...loginRequest,
+        account
+      });
+      return result.idToken;
+    } catch {
+      return null;
+    }
+  }
   var CLIENT_ID2, AUTHORITY, msalConfig, loginRequest, msalInstance;
   var init_auth = __esm({
     "src/js/auth.js"() {
@@ -15505,6 +15519,9 @@
         "metadata.openMap": "\u{1F4CD} Open in Google Maps",
         "metadata.unavailable": "Location data unavailable",
         "metadata.exifHeader": "Photo Details (EXIF)",
+        "upload.pending": "\u23F3 Uploading\u2026",
+        "upload.success": "\u2705 Saved to database",
+        "upload.error": "\u274C Upload failed",
         "login.title": "Sign In",
         "login.subtitle": "Sign in with your Microsoft account to continue.",
         "login.button": "Sign in with Microsoft",
@@ -15538,6 +15555,9 @@
         "metadata.openMap": "\u{1F4CD} \xC5pne i Google Maps",
         "metadata.unavailable": "Posisjonsdata utilgjengelig",
         "metadata.exifHeader": "Fotodetaljer (EXIF)",
+        "upload.pending": "\u23F3 Laster opp\u2026",
+        "upload.success": "\u2705 Lagret i databasen",
+        "upload.error": "\u274C Opplasting feilet",
         "login.title": "Logg inn",
         "login.subtitle": "Logg inn med din Microsoft-konto for \xE5 fortsette.",
         "login.button": "Logg inn med Microsoft",
@@ -23885,6 +23905,38 @@
     }
   });
 
+  // src/js/api.js
+  async function submitPhotoMetadata({ latitude, longitude, capturedAt }) {
+    const token = await getIdToken();
+    if (!token) {
+      throw new Error("Not authenticated \u2014 cannot submit metadata.");
+    }
+    const imagelocation = latitude != null && longitude != null ? `${latitude},${longitude}` : "";
+    const response = await fetch(`${API_BASE}/api/photos`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        imagelocation,
+        created: capturedAt || (/* @__PURE__ */ new Date()).toISOString()
+      })
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      throw new Error(body.error || `Upload failed (HTTP ${response.status})`);
+    }
+    return response.json();
+  }
+  var API_BASE;
+  var init_api = __esm({
+    "src/js/api.js"() {
+      init_auth();
+      API_BASE = "https://documentation-api.himmelfisk.workers.dev";
+    }
+  });
+
   // src/js/app.js
   var require_app = __commonJS({
     "src/js/app.js"() {
@@ -23893,6 +23945,7 @@
       init_auth();
       init_i18n();
       init_geotag();
+      init_api();
       async function init() {
         initI18n();
         const platform = Capacitor.getPlatform();
@@ -23957,6 +24010,18 @@
                   const geotag = await collectGeotagData(imageSrc, photo.exif);
                   console.log("Geotag metadata:", geotag);
                   renderMetadata(metadataContainer, geotag);
+                  showUploadStatus("pending");
+                  try {
+                    await submitPhotoMetadata({
+                      latitude: geotag.latitude,
+                      longitude: geotag.longitude,
+                      capturedAt: geotag.capturedAt
+                    });
+                    showUploadStatus("success");
+                  } catch (uploadErr) {
+                    console.error("Upload failed:", uploadErr);
+                    showUploadStatus("error", uploadErr.message);
+                  }
                 } catch (geoErr) {
                   console.warn("Geotag collection failed:", geoErr);
                   metadataContainer.textContent = t("metadata.unavailable");
@@ -24013,6 +24078,19 @@
         if (el) {
           el.textContent = err.message || String(err);
           el.hidden = false;
+        }
+      }
+      function showUploadStatus(status, detail) {
+        const el = document.getElementById("upload-status");
+        if (!el) return;
+        el.hidden = false;
+        el.className = "upload-status upload-" + status;
+        if (status === "pending") {
+          el.textContent = t("upload.pending");
+        } else if (status === "success") {
+          el.textContent = t("upload.success");
+        } else {
+          el.textContent = t("upload.error") + (detail ? ` (${detail})` : "");
         }
       }
       function renderMetadata(container, geotag) {

@@ -213,3 +213,27 @@ export async function getAccessToken(requestedScopes) {
     throw err;
   }
 }
+
+/**
+ * Silently acquire the MSAL ID-token for the current user.
+ *
+ * The ID-token (audience = CLIENT_ID) is used to authenticate
+ * requests to the Cloudflare Worker API.  It contains the `tid`
+ * (tenant ID) and `name` claims needed for data isolation.
+ *
+ * @returns {Promise<string|null>} raw ID-token JWT, or null
+ */
+export async function getIdToken() {
+  if (!msalInstance) return null;
+  const account = getAccount();
+  if (!account) return null;
+  try {
+    const result = await msalInstance.acquireTokenSilent({
+      ...loginRequest,
+      account,
+    });
+    return result.idToken;
+  } catch {
+    return null;
+  }
+}

@@ -175,10 +175,12 @@ a working, testable increment.
 - [x] **M2 — Microsoft authentication** — MSAL login gate; no UI until
       authenticated. On login, resolve the user's company (via Entra tenant ID)
       and set it as the active context for all subsequent operations.
-- [ ] **M3 — Geolocation capture** — Attach GPS coordinates to each photo.
-- [ ] **M4 — Cloudflare backend** — Workers API, R2 bucket, D1 database.
+- [x] **M3 — Geolocation capture** — Attach GPS coordinates to each photo.
+- [x] **M4 — Cloudflare backend** — Workers API, D1 database with JWT-validated
+      photo metadata storage. Tenant isolation via `tenant_id` from verified
+      MSAL ID-token.
 - [ ] **M5 — Photo upload & confirmation** — Auto-upload with progress/status
-      feedback.
+      feedback.  *(metadata upload implemented — image upload (R2) next)*
 - [ ] **M6 — Web dashboard (read-only)** — Managers can view uploaded photos in
       a browser.
 - [ ] **M7 — Admin panel** — Create/edit construction sites with map
