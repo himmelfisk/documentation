@@ -15422,6 +15422,24 @@
     if (!msalInstance) return;
     await msalInstance.logoutRedirect();
   }
+  function getAccount2() {
+    if (!msalInstance) return null;
+    return msalInstance.getActiveAccount() ?? null;
+  }
+  async function getAccessTokenSilent(requestedScopes) {
+    if (!msalInstance) return null;
+    const account = getAccount2();
+    if (!account) return null;
+    try {
+      const result = await msalInstance.acquireTokenSilent({
+        scopes: requestedScopes || loginRequest.scopes,
+        account
+      });
+      return result.accessToken;
+    } catch {
+      return null;
+    }
+  }
   var CLIENT_ID2, AUTHORITY, msalConfig, loginRequest, msalInstance;
   var init_auth = __esm({
     "src/js/auth.js"() {
@@ -15490,7 +15508,9 @@
         "login.title": "Sign In",
         "login.subtitle": "Sign in with your Microsoft account to continue.",
         "login.button": "Sign in with Microsoft",
-        "login.logout": "Sign out"
+        "login.logout": "Sign out",
+        "account.company": "Company",
+        "account.tenantId": "Tenant ID"
       };
     }
   });
@@ -15521,7 +15541,9 @@
         "login.title": "Logg inn",
         "login.subtitle": "Logg inn med din Microsoft-konto for \xE5 fortsette.",
         "login.button": "Logg inn med Microsoft",
-        "login.logout": "Logg ut"
+        "login.logout": "Logg ut",
+        "account.company": "Selskap",
+        "account.tenantId": "Tenant-ID"
       };
     }
   });
@@ -23946,6 +23968,20 @@
           });
         }
       }
+      async function fetchOrganizationName() {
+        try {
+          const token = await getAccessTokenSilent(["Organization.Read.All"]);
+          if (!token) return null;
+          const res = await fetch("https://graph.microsoft.com/v1.0/organization", {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (!res.ok) return null;
+          const data = await res.json();
+          return data.value?.[0]?.displayName ?? null;
+        } catch {
+          return null;
+        }
+      }
       function showApp(account) {
         const loginScreen = document.getElementById("login-screen");
         const app = document.getElementById("app");
@@ -23955,6 +23991,16 @@
         const greetingName = document.getElementById("greeting-name");
         if (userName) userName.textContent = account.name || account.username;
         if (greetingName) greetingName.textContent = account.name || account.username;
+        const tenantIdEl = document.getElementById("tenant-id");
+        if (tenantIdEl) tenantIdEl.textContent = account.tenantId;
+        const companyNameEl = document.getElementById("company-name");
+        if (companyNameEl) {
+          fetchOrganizationName().then((name3) => {
+            companyNameEl.textContent = name3 || "\u2014";
+          }).catch((err) => {
+            console.warn("Failed to fetch company name:", err);
+          });
+        }
       }
       function showLogin() {
         const loginScreen = document.getElementById("login-screen");

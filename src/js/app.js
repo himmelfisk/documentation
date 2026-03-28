@@ -1,6 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
-import { initAuth, login, logout } from './auth.js';
+import { initAuth, login, logout, getAccessTokenSilent } from './auth.js';
 import { initI18n, t } from './i18n.js';
 import { collectGeotagData, ensureGeolocationPermission } from './geotag.js';
 
@@ -102,6 +102,27 @@ async function init() {
 }
 
 /**
+ * Fetch the organization display name from Microsoft Graph.
+ * Requires the Organization.Read.All delegated permission to have been
+ * granted (admin-consent) on the app registration.  Returns null when
+ * the permission is missing or the call fails for any other reason.
+ */
+async function fetchOrganizationName() {
+  try {
+    const token = await getAccessTokenSilent(['Organization.Read.All']);
+    if (!token) return null;
+    const res = await fetch('https://graph.microsoft.com/v1.0/organization', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.value?.[0]?.displayName ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Show the main app UI and populate user info.
  */
 function showApp(account) {
@@ -113,6 +134,16 @@ function showApp(account) {
   const greetingName = document.getElementById('greeting-name');
   if (userName) userName.textContent = account.name || account.username;
   if (greetingName) greetingName.textContent = account.name || account.username;
+
+  const tenantIdEl = document.getElementById('tenant-id');
+  if (tenantIdEl) tenantIdEl.textContent = account.tenantId;
+
+  const companyNameEl = document.getElementById('company-name');
+  if (companyNameEl) {
+    fetchOrganizationName()
+      .then((name) => { companyNameEl.textContent = name || '—'; })
+      .catch((err) => { console.warn('Failed to fetch company name:', err); });
+  }
 }
 
 /**
