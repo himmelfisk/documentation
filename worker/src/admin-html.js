@@ -555,12 +555,12 @@ export function getAdminHtml(origin) {
         for (const site of sites) {
           const hasCoords = site.latitude != null && site.longitude != null;
           const coordsHtml = hasCoords
-            ? '<a href="https://www.google.com/maps?q=' + site.latitude + ',' + site.longitude +
+            ? '<a href="https://www.google.com/maps?q=' + encodeURIComponent(site.latitude + ',' + site.longitude) +
               '" target="_blank" rel="noopener">' + Number(site.latitude).toFixed(5) + ', ' + Number(site.longitude).toFixed(5) + '</a>'
             : '<span style="opacity:0.5">No coordinates</span>';
 
           html +=
-            '<div class="site-item" data-id="' + site.id + '">' +
+            '<div class="site-item" data-id="' + parseInt(site.id, 10) + '">' +
             '  <div class="site-info">' +
             '    <div class="site-name">' + escapeHtml(site.name) + '</div>' +
             (site.description ? '    <div class="site-desc">' + escapeHtml(site.description) + '</div>' : '') +
@@ -568,8 +568,8 @@ export function getAdminHtml(origin) {
             '    <div class="site-coords">' + coordsHtml + '</div>' +
             '  </div>' +
             '  <div class="site-actions">' +
-            '    <button class="btn btn-secondary btn-sm edit-btn" data-id="' + site.id + '">Edit</button>' +
-            '    <button class="btn btn-danger btn-sm delete-btn" data-id="' + site.id + '">Delete</button>' +
+            '    <button class="btn btn-secondary btn-sm edit-btn" data-id="' + parseInt(site.id, 10) + '">Edit</button>' +
+            '    <button class="btn btn-danger btn-sm delete-btn" data-id="' + parseInt(site.id, 10) + '">Delete</button>' +
             '  </div>' +
             '</div>';
         }

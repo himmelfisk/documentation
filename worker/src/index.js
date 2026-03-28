@@ -252,8 +252,8 @@ async function handlePostSite(request, env) {
   }
 
   const description = typeof body.description === 'string' ? body.description.trim() : '';
-  const latitude = typeof body.latitude === 'number' && isFinite(body.latitude) ? body.latitude : null;
-  const longitude = typeof body.longitude === 'number' && isFinite(body.longitude) ? body.longitude : null;
+  const latitude = typeof body.latitude === 'number' && isFinite(body.latitude) && body.latitude >= -90 && body.latitude <= 90 ? body.latitude : null;
+  const longitude = typeof body.longitude === 'number' && isFinite(body.longitude) && body.longitude >= -180 && body.longitude <= 180 ? body.longitude : null;
   const address = typeof body.address === 'string' ? body.address.trim() : '';
   const now = new Date().toISOString();
 
@@ -277,8 +277,8 @@ async function handlePutSite(request, env, siteId) {
   }
 
   const description = typeof body.description === 'string' ? body.description.trim() : '';
-  const latitude = typeof body.latitude === 'number' && isFinite(body.latitude) ? body.latitude : null;
-  const longitude = typeof body.longitude === 'number' && isFinite(body.longitude) ? body.longitude : null;
+  const latitude = typeof body.latitude === 'number' && isFinite(body.latitude) && body.latitude >= -90 && body.latitude <= 90 ? body.latitude : null;
+  const longitude = typeof body.longitude === 'number' && isFinite(body.longitude) && body.longitude >= -180 && body.longitude <= 180 ? body.longitude : null;
   const address = typeof body.address === 'string' ? body.address.trim() : '';
   const now = new Date().toISOString();
 
