@@ -20,5 +20,7 @@
   "login.title": "Logg inn",
   "login.subtitle": "Logg inn med din Microsoft-konto for å fortsette.",
   "login.button": "Logg inn med Microsoft",
-  "login.logout": "Logg ut"
+  "login.logout": "Logg ut",
+  "account.company": "Selskap",
+  "account.tenantId": "Tenant-ID"
 }

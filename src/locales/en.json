@@ -20,5 +20,7 @@
   "login.title": "Sign In",
   "login.subtitle": "Sign in with your Microsoft account to continue.",
   "login.button": "Sign in with Microsoft",
-  "login.logout": "Sign out"
+  "login.logout": "Sign out",
+  "account.company": "Company",
+  "account.tenantId": "Tenant ID"
 }

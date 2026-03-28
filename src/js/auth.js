@@ -163,6 +163,29 @@ export function getAccount() {
 }
 
 /**
+ * Try to silently acquire an access token for the given scopes.
+ * Returns null instead of triggering an interactive redirect when the
+ * token cannot be obtained (e.g. scope not yet consented).
+ *
+ * @param {string[]} [requestedScopes] – defaults to ['User.Read']
+ * @returns {Promise<string|null>} access token, or null on failure
+ */
+export async function getAccessTokenSilent(requestedScopes) {
+  if (!msalInstance) return null;
+  const account = getAccount();
+  if (!account) return null;
+  try {
+    const result = await msalInstance.acquireTokenSilent({
+      scopes: requestedScopes || loginRequest.scopes,
+      account,
+    });
+    return result.accessToken;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Silently acquire an access token for the given scopes.
  * Falls back to an interactive redirect if the silent call fails
  * (e.g. because consent is required or the refresh token expired).
