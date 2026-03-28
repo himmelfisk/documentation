@@ -13,6 +13,8 @@ export function getAdminHtml(origin) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light dark">
   <title>Admin — Sites</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <style>
     /* ---- Reset & base ---- */
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -383,6 +385,45 @@ export function getAdminHtml(origin) {
       color: #888;
     }
 
+    /* ---- Map picker ---- */
+    #map-container {
+      height: 300px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      overflow: hidden;
+      cursor: crosshair;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      #map-container { border-color: #555; }
+      #map-container .leaflet-tile { filter: brightness(0.85); }
+    }
+
+    .map-coords {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 0.85rem;
+      color: #666;
+      font-family: "SF Mono", "Menlo", "Monaco", monospace;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .map-coords { color: #999; }
+    }
+
+    .map-coords .clear-pin {
+      font-family: inherit;
+      font-size: 0.8rem;
+      color: #ff3b30;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 2px 6px;
+    }
+    .map-coords .clear-pin:hover { text-decoration: underline; }
+
     /* ---- Hidden ---- */
     [hidden] { display: none !important; }
   </style>
@@ -411,14 +452,14 @@ export function getAdminHtml(origin) {
             <textarea id="site-desc-input" rows="2" placeholder="Optional description of the site"></textarea>
           </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label for="site-lat-input">Latitude</label>
-              <input type="number" id="site-lat-input" step="any" placeholder="59.9139">
-            </div>
-            <div class="form-group">
-              <label for="site-lng-input">Longitude</label>
-              <input type="number" id="site-lng-input" step="any" placeholder="10.7522">
+          <div class="form-group">
+            <label>Pick Location</label>
+            <div id="map-container"></div>
+            <input type="hidden" id="site-lat-input" value="">
+            <input type="hidden" id="site-lng-input" value="">
+            <div class="map-coords">
+              <span id="map-coords-display">Click the map to set a pin</span>
+              <button type="button" class="clear-pin" id="clear-pin-btn" hidden>✕ Clear pin</button>
             </div>
           </div>
 
@@ -487,6 +528,14 @@ export function getAdminHtml(origin) {
       const deleteOverlay = document.getElementById('delete-overlay');
       const deleteMessage = document.getElementById('delete-message');
       const toast = document.getElementById('toast');
+      const mapCoordsDisplay = document.getElementById('map-coords-display');
+      const clearPinBtn = document.getElementById('clear-pin-btn');
+
+      // ---- Map state ----
+      let map = null;
+      let marker = null;
+      const DEFAULT_CENTER = [59.9139, 10.7522]; // Oslo
+      const DEFAULT_ZOOM = 5;
 
       // ---- Toast ----
       let toastTimer;
@@ -582,10 +631,55 @@ export function getAdminHtml(origin) {
         return div.innerHTML;
       }
 
+      // ---- Map helpers ----
+      function initMap() {
+        if (map) return;
+        map = L.map('map-container', { attributionControl: false }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '© OpenStreetMap',
+        }).addTo(map);
+        L.control.attribution({ prefix: false }).addAttribution('© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>').addTo(map);
+
+        map.on('click', function (e) {
+          setPin(e.latlng.lat, e.latlng.lng);
+        });
+      }
+
+      function setPin(lat, lng) {
+        siteLatInput.value = lat;
+        siteLngInput.value = lng;
+        mapCoordsDisplay.textContent = Number(lat).toFixed(5) + ', ' + Number(lng).toFixed(5);
+        clearPinBtn.hidden = false;
+
+        if (marker) {
+          marker.setLatLng([lat, lng]);
+        } else {
+          marker = L.marker([lat, lng]).addTo(map);
+        }
+      }
+
+      function clearPin() {
+        siteLatInput.value = '';
+        siteLngInput.value = '';
+        mapCoordsDisplay.textContent = 'Click the map to set a pin';
+        clearPinBtn.hidden = true;
+        if (marker) {
+          map.removeLayer(marker);
+          marker = null;
+        }
+      }
+
+      clearPinBtn.addEventListener('click', clearPin);
+
       // ---- Form ----
       function showForm(site) {
         siteFormSection.hidden = false;
         siteListSection.hidden = true;
+
+        // Initialise map on first show, then fix tile rendering
+        initMap();
+        setTimeout(() => map.invalidateSize(), 50);
 
         if (site) {
           formTitle.textContent = 'Edit Site';
@@ -593,14 +687,22 @@ export function getAdminHtml(origin) {
           siteIdInput.value = site.id;
           siteNameInput.value = site.name || '';
           siteDescInput.value = site.description || '';
-          siteLatInput.value = site.latitude != null ? site.latitude : '';
-          siteLngInput.value = site.longitude != null ? site.longitude : '';
           siteAddressInput.value = site.address || '';
+
+          if (site.latitude != null && site.longitude != null) {
+            setPin(site.latitude, site.longitude);
+            map.setView([site.latitude, site.longitude], 14);
+          } else {
+            clearPin();
+            map.setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+          }
         } else {
           formTitle.textContent = 'Add New Site';
           formSubmitBtn.textContent = 'Add Site';
           siteForm.reset();
           siteIdInput.value = '';
+          clearPin();
+          map.setView(DEFAULT_CENTER, DEFAULT_ZOOM);
         }
 
         siteNameInput.focus();
