@@ -911,7 +911,7 @@ export function getDashboardHtml(origin) {
           html +=
             '<div class="photo-card">' +
             (hasImage
-              ? '<img data-auth-src="' + escapeHtml(photo.imageurl) + '" alt="' + altText + '">'
+              ? '<img data-auth-src="' + escapeHtml(photo.imageurl) + '" alt="' + altText + '" tabindex="0" role="button">'
               : '<div style="height:160px;display:flex;align-items:center;justify-content:center;background:#e8e8e8;color:#aaa;font-size:2rem">📷</div>') +
             '  <div class="photo-meta">' +
             '    <div class="photo-user">' + escapeHtml(photo.user || 'Unknown') + '</div>' +
@@ -946,6 +946,13 @@ export function getDashboardHtml(origin) {
       photoGrid.addEventListener('click', (e) => {
         const img = e.target.closest('.photo-card img');
         if (img) openLightbox(img);
+      });
+
+      photoGrid.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          const img = e.target.closest('.photo-card img');
+          if (img) { e.preventDefault(); openLightbox(img); }
+        }
       });
 
       lightboxClose.addEventListener('click', closeLightbox);
