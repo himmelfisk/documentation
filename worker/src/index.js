@@ -207,8 +207,9 @@ async function handleGetImage(env, claims, tenantId, filename) {
 // ---------------------------------------------------------------------------
 
 /**
- * Ensure the `sites` table exists.  Called lazily on the first sites-related
- * request so we don't run DDL on every Worker invocation.
+ * Ensure the `sites` table exists (with the `tenant_id` column).
+ * Called lazily on the first sites-related request so we don't run DDL on
+ * every Worker invocation.
  */
 let sitesTableReady = false;
 async function ensureSitesTable(db) {
@@ -222,27 +223,40 @@ async function ensureSitesTable(db) {
       longitude   REAL,
       address     TEXT    DEFAULT '',
       created     TEXT    NOT NULL,
-      modified    TEXT    NOT NULL
+      modified    TEXT    NOT NULL,
+      tenant_id   TEXT    DEFAULT ''
     )
   `).run();
+  // Migration: add tenant_id to existing tables that lack it
+  try {
+    await db.prepare(
+      `ALTER TABLE ${SITES_TABLE} ADD COLUMN tenant_id TEXT DEFAULT ''`,
+    ).run();
+  } catch (err) {
+    // "duplicate column name" is expected after the first migration run.
+    // Re-throw anything else so genuine DB errors aren't swallowed.
+    if (!String(err).includes('duplicate column name')) throw err;
+  }
   sitesTableReady = true;
 }
 
 // ---------------------------------------------------------------------------
-// Sites route handlers  (no auth required — admin panel)
+// Sites route handlers  (authenticated — scoped to tenant)
 // ---------------------------------------------------------------------------
 
-/** GET /api/sites — list all registered sites. */
-async function handleGetSites(env) {
+/** GET /api/sites — list sites for the authenticated tenant. */
+async function handleGetSites(env, claims) {
   await ensureSitesTable(env.DB);
   const result = await env.DB.prepare(
-    `SELECT id, name, description, latitude, longitude, address, created, modified FROM ${SITES_TABLE} ORDER BY created DESC`,
-  ).all();
+    `SELECT id, name, description, latitude, longitude, address, created, modified FROM ${SITES_TABLE} WHERE tenant_id = ? ORDER BY created DESC`,
+  )
+    .bind(claims.tid)
+    .all();
   return json({ sites: result.results });
 }
 
-/** POST /api/sites — register a new site. */
-async function handlePostSite(request, env) {
+/** POST /api/sites — register a new site for the authenticated tenant. */
+async function handlePostSite(request, env, claims) {
   await ensureSitesTable(env.DB);
 
   const body = await request.json();
@@ -258,16 +272,16 @@ async function handlePostSite(request, env) {
   const now = new Date().toISOString();
 
   const result = await env.DB.prepare(
-    `INSERT INTO ${SITES_TABLE} (name, description, latitude, longitude, address, created, modified) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO ${SITES_TABLE} (name, description, latitude, longitude, address, created, modified, tenant_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
   )
-    .bind(name, description, latitude, longitude, address, now, now)
+    .bind(name, description, latitude, longitude, address, now, now, claims.tid)
     .run();
 
   return json({ success: true, id: result.meta.last_row_id }, 201);
 }
 
-/** PUT /api/sites/:id — update an existing site. */
-async function handlePutSite(request, env, siteId) {
+/** PUT /api/sites/:id — update an existing site (tenant-scoped). */
+async function handlePutSite(request, env, siteId, claims) {
   await ensureSitesTable(env.DB);
 
   const body = await request.json();
@@ -283,9 +297,9 @@ async function handlePutSite(request, env, siteId) {
   const now = new Date().toISOString();
 
   const result = await env.DB.prepare(
-    `UPDATE ${SITES_TABLE} SET name = ?, description = ?, latitude = ?, longitude = ?, address = ?, modified = ? WHERE id = ?`,
+    `UPDATE ${SITES_TABLE} SET name = ?, description = ?, latitude = ?, longitude = ?, address = ?, modified = ? WHERE id = ? AND tenant_id = ?`,
   )
-    .bind(name, description, latitude, longitude, address, now, siteId)
+    .bind(name, description, latitude, longitude, address, now, siteId, claims.tid)
     .run();
 
   if (result.meta.changes === 0) {
@@ -295,14 +309,14 @@ async function handlePutSite(request, env, siteId) {
   return json({ success: true });
 }
 
-/** DELETE /api/sites/:id — remove a site. */
-async function handleDeleteSite(env, siteId) {
+/** DELETE /api/sites/:id — remove a site (tenant-scoped). */
+async function handleDeleteSite(env, siteId, claims) {
   await ensureSitesTable(env.DB);
 
   const result = await env.DB.prepare(
-    `DELETE FROM ${SITES_TABLE} WHERE id = ?`,
+    `DELETE FROM ${SITES_TABLE} WHERE id = ? AND tenant_id = ?`,
   )
-    .bind(siteId)
+    .bind(siteId, claims.tid)
     .run();
 
   if (result.meta.changes === 0) {
@@ -332,37 +346,33 @@ export default {
       });
     }
 
-    // ---- Sites API (no auth) ----
-    if (url.pathname === '/api/sites' && request.method === 'GET') {
-      try {
-        return await handleGetSites(env);
-      } catch (err) {
-        console.error('GET /api/sites failed:', err);
-        return json({ error: 'Internal server error' }, 500);
+    // ---- Sites API (authenticated — scoped to tenant) ----
+    if (url.pathname === '/api/sites' || url.pathname.match(/^\/api\/sites\/\d+$/)) {
+      const claims = await authenticate(request);
+      if (!claims) {
+        return json({ error: 'Unauthorized' }, 401);
       }
-    }
 
-    if (url.pathname === '/api/sites' && request.method === 'POST') {
       try {
-        return await handlePostSite(request, env);
-      } catch (err) {
-        console.error('POST /api/sites failed:', err);
-        return json({ error: 'Internal server error' }, 500);
-      }
-    }
-
-    const sitesMatch = url.pathname.match(/^\/api\/sites\/(\d+)$/);
-    if (sitesMatch) {
-      const siteId = parseInt(sitesMatch[1], 10);
-      try {
-        if (request.method === 'PUT') {
-          return await handlePutSite(request, env, siteId);
+        if (url.pathname === '/api/sites' && request.method === 'GET') {
+          return await handleGetSites(env, claims);
         }
-        if (request.method === 'DELETE') {
-          return await handleDeleteSite(env, siteId);
+        if (url.pathname === '/api/sites' && request.method === 'POST') {
+          return await handlePostSite(request, env, claims);
+        }
+
+        const sitesMatch = url.pathname.match(/^\/api\/sites\/(\d+)$/);
+        if (sitesMatch) {
+          const siteId = parseInt(sitesMatch[1], 10);
+          if (request.method === 'PUT') {
+            return await handlePutSite(request, env, siteId, claims);
+          }
+          if (request.method === 'DELETE') {
+            return await handleDeleteSite(env, siteId, claims);
+          }
         }
       } catch (err) {
-        console.error(`${request.method} /api/sites/${siteId} failed:`, err);
+        console.error(`${request.method} ${url.pathname} failed:`, err);
         return json({ error: 'Internal server error' }, 500);
       }
     }
