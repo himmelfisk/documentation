@@ -33,7 +33,7 @@ Cloudflare Workers run on V8 isolates distributed across 300+ edge locations. Ea
 | Metric | Free plan | Paid plan |
 |--------|-----------|-----------|
 | Requests/day | 100,000 | Unlimited (billed) |
-| CPU time/request | 10 ms | 30 ms (up to 15 min with Cron) |
+| CPU time/request | 10 ms | 50 ms (up to 15 min with Cron) |
 | Memory/isolate | 128 MB | 128 MB |
 | Subrequest limit | 50 | 1,000 |
 
@@ -61,7 +61,7 @@ D1 is built on SQLite with Cloudflare's distributed storage layer. It provides:
 
 ### Identified Bottlenecks
 
-1. **Write serialization.** Every `POST /api/photos`, `POST /api/sites`, `PUT /api/sites/:id`, and `DELETE /api/sites/:id` is a write operation routed to the single primary. Under heavy concurrent uploads (e.g., multiple field teams submitting photos simultaneously), writes queue up. D1's write throughput is roughly **10,000–30,000 writes/second** in practice, but latency per write increases under contention.
+1. **Write serialization.** Every `POST /api/photos`, `POST /api/sites`, `PUT /api/sites/:id`, and `DELETE /api/sites/:id` is a write operation routed to the single primary. Under heavy concurrent uploads (e.g., multiple field teams submitting photos simultaneously), writes queue up. D1's write throughput is roughly **100–1,000 writes/second** in practice (depending on row size and indexing), and latency per write increases under contention.
 
 2. **No indexes beyond the primary key.** The `documentation` table is queried with `WHERE tenant_id = ? ORDER BY created DESC` but there is no explicit composite index on `(tenant_id, created)`. As the table grows, this query degrades from an index scan to a full table scan filtered in SQLite. The same applies to the `sites` table.
 
@@ -168,11 +168,11 @@ Based on the architecture, here are estimated throughput limits:
 
 | Scenario | Estimated Capacity | Limiting Factor |
 |----------|-------------------|-----------------|
-| Concurrent photo uploads | ~500–1,000 req/s | D1 write serialization |
+| Concurrent photo uploads | ~100–500 req/s | D1 write serialization (single-writer SQLite) |
 | Concurrent photo reads (list) | ~5,000–10,000 req/s | D1 read replicas, but unbounded payloads |
 | Concurrent image serves | ~10,000+ req/s | R2 throughput (would be higher with CDN caching) |
 | Authentication overhead | ~1–2 ms/req (warm), ~200 ms/req (cold JWKS) | JWKS fetch on isolate cold start |
-| Concurrent site CRUD | ~500–1,000 req/s | D1 write serialization (shared writer) |
+| Concurrent site CRUD | ~100–500 req/s | D1 write serialization (shared writer) |
 
 ### Cost Projections (Workers Paid Plan)
 
@@ -215,7 +215,7 @@ The current architecture is well-suited for its use case: field teams capturing 
 
 The primary performance risks under heavy load are:
 
-- **D1 write serialization** — the single-writer model limits concurrent photo uploads to ~500–1,000/s, which is adequate for hundreds of concurrent users but would require buffering at larger scale.
+- **D1 write serialization** — the single-writer model limits concurrent photo uploads to ~100–500/s, which is adequate for dozens of concurrent field users but would require write buffering (e.g., Cloudflare Queues) at larger scale.
 - **Unbounded queries** — the lack of pagination on photo listings will degrade as tenants accumulate thousands of records.
 - **Image serving without CDN caching** — authenticated image routes bypass Cloudflare's cache layer, meaning every image view hits R2 directly.
 
