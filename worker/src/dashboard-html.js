@@ -467,6 +467,58 @@ export function getDashboardHtml(origin) {
 
     /* ---- Hidden ---- */
     [hidden] { display: none !important; }
+
+    /* ---- Fullscreen Lightbox ---- */
+    .lightbox-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      background: rgba(0,0,0,0.92);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+      -webkit-backdrop-filter: blur(4px);
+      backdrop-filter: blur(4px);
+    }
+
+    .lightbox-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .lightbox-img {
+      max-width: 95vw;
+      max-height: 92vh;
+      object-fit: contain;
+      border-radius: 6px;
+      box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .lightbox-close {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      font-size: 2rem;
+      color: #fff;
+      background: none;
+      border: none;
+      cursor: pointer;
+      z-index: 2001;
+      line-height: 1;
+      padding: 8px;
+      opacity: 0.8;
+      transition: opacity 0.15s;
+    }
+
+    .lightbox-close:hover { opacity: 1; }
+
+    /* Make photo cards indicate they are clickable for fullscreen */
+    .photo-card img { cursor: zoom-in; }
   </style>
 </head>
 <body>
@@ -515,12 +567,18 @@ export function getDashboardHtml(origin) {
 
     <!-- Tabs -->
     <div class="tabs">
-      <button class="tab-btn active" data-tab="photos">📷 Photos</button>
-      <button class="tab-btn" data-tab="sites">🏗️ Sites</button>
+      <button class="tab-btn active" data-tab="sites">🏗️ Sites</button>
+      <button class="tab-btn" data-tab="photos">📷 Photos</button>
+    </div>
+
+    <!-- Sites tab (default view) -->
+    <div id="tab-sites">
+      <div class="loading" id="sites-loading">Loading sites…</div>
+      <div class="card" id="site-list"></div>
     </div>
 
     <!-- Photos tab -->
-    <div id="tab-photos">
+    <div id="tab-photos" hidden>
       <div class="site-detail-header" id="site-detail-header" hidden>
         <button class="btn-back" id="back-to-sites-btn">← All Sites</button>
         <div>
@@ -532,17 +590,17 @@ export function getDashboardHtml(origin) {
       <div class="photo-grid" id="photo-grid"></div>
     </div>
 
-    <!-- Sites tab -->
-    <div id="tab-sites" hidden>
-      <div class="loading" id="sites-loading">Loading sites…</div>
-      <div class="card" id="site-list"></div>
-    </div>
-
   </div> <!-- /.container -->
   </div> <!-- /#dashboard-content -->
 
   <!-- Toast notification -->
   <div class="toast" id="toast"></div>
+
+  <!-- Fullscreen lightbox overlay -->
+  <div class="lightbox-overlay" id="lightbox-overlay">
+    <button class="lightbox-close" id="lightbox-close" aria-label="Close">&times;</button>
+    <img class="lightbox-img" id="lightbox-img" alt="Full size image">
+  </div>
 
   <script type="module">
     import { PublicClientApplication } from 'https://cdn.jsdelivr.net/npm/@azure/msal-browser@5.6.1/+esm';
@@ -867,6 +925,38 @@ export function getDashboardHtml(origin) {
         photoGrid.innerHTML = html;
         photoGrid.querySelectorAll('img[data-auth-src]').forEach(img => imageObserver.observe(img));
       }
+
+      // ---- Fullscreen Lightbox ----
+      const lightboxOverlay = document.getElementById('lightbox-overlay');
+      const lightboxImg = document.getElementById('lightbox-img');
+      const lightboxClose = document.getElementById('lightbox-close');
+
+      function openLightbox(imgEl) {
+        if (!imgEl.src || imgEl.src.startsWith('data:')) return;
+        lightboxImg.src = imgEl.src;
+        lightboxOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeLightbox() {
+        lightboxOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+
+      photoGrid.addEventListener('click', (e) => {
+        const img = e.target.closest('.photo-card img');
+        if (img) openLightbox(img);
+      });
+
+      lightboxClose.addEventListener('click', closeLightbox);
+
+      lightboxOverlay.addEventListener('click', (e) => {
+        if (e.target === lightboxOverlay) closeLightbox();
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && lightboxOverlay.classList.contains('active')) closeLightbox();
+      });
 
       // ---- Sites ----
       const siteListEl = document.getElementById('site-list');
