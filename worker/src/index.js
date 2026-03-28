@@ -33,7 +33,8 @@ const jwks = createRemoteJWKSet(JWKS_URL);
 
 /**
  * Table name in the D1 database.
- * This constant is never derived from user input.
+ * SECURITY: This must remain a hardcoded string literal — never derived
+ * from user input, request parameters, or environment variables.
  */
 const TABLE = 'photos';
 
