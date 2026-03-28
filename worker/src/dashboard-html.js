@@ -790,8 +790,39 @@ export function getDashboardHtml(origin) {
         renderPhotos();
       }
 
+      // Revoke previously created blob URLs to free memory
+      let activeBlobUrls = [];
+
+      function revokeActiveBlobUrls() {
+        activeBlobUrls.forEach(u => URL.revokeObjectURL(u));
+        activeBlobUrls = [];
+      }
+
+      /**
+       * Fetch images that require JWT auth and set their src to blob URLs.
+       * Browser <img> tags cannot send Authorization headers natively, so
+       * we fetch each image via authFetch() and convert to a blob URL.
+       */
+      async function loadAuthImages() {
+        const images = photoGrid.querySelectorAll('img[data-auth-src]');
+        await Promise.allSettled([...images].map(async (img) => {
+          const url = img.getAttribute('data-auth-src');
+          try {
+            const res = await authFetch(url);
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const blob = await res.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            activeBlobUrls.push(blobUrl);
+            img.src = blobUrl;
+          } catch {
+            img.alt = 'Failed to load image';
+          }
+        }));
+      }
+
       function renderPhotos() {
         photosLoading.hidden = true;
+        revokeActiveBlobUrls();
         const displayPhotos = activeSiteId !== null ? photosForSite(activeSiteId) : photos;
 
         if (displayPhotos.length === 0) {
@@ -814,7 +845,7 @@ export function getDashboardHtml(origin) {
           html +=
             '<div class="photo-card">' +
             (hasImage
-              ? '<img src="' + escapeHtml(photo.imageurl) + '" alt="' + altText + '" loading="lazy">'
+              ? '<img data-auth-src="' + escapeHtml(photo.imageurl) + '" alt="' + altText + '">'
               : '<div style="height:160px;display:flex;align-items:center;justify-content:center;background:#e8e8e8;color:#aaa;font-size:2rem">📷</div>') +
             '  <div class="photo-meta">' +
             '    <div class="photo-user">' + escapeHtml(photo.user || 'Unknown') + '</div>' +
@@ -826,6 +857,7 @@ export function getDashboardHtml(origin) {
             '</div>';
         }
         photoGrid.innerHTML = html;
+        loadAuthImages();
       }
 
       // ---- Sites ----
