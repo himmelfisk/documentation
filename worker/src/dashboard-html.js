@@ -582,7 +582,7 @@ export function getDashboardHtml(origin) {
 <body>
   <!-- Language selector -->
   <div class="lang-switcher">
-    <select id="lang-select" aria-label="Språk">
+    <select id="lang-select" aria-label="Språk" data-i18n="langSwitcher.label" data-i18n-attr="aria-label">
       <option value="no">Norsk</option>
       <option value="en">English</option>
     </select>
@@ -711,6 +711,7 @@ export function getDashboardHtml(origin) {
         'toast.failedPhotos': 'Kunne ikke laste bilder',
         'toast.failedSites': 'Kunne ikke laste prosjekter',
         'error.azureConfig': 'Azure AD-konfigurasjonsfeil: omdirigerings-URIen må være registrert som en «Single-page application» (ikke «Web») i Azure-appregistreringen. Se README for oppsettsinstruksjoner.',
+        'langSwitcher.label': 'Språk',
       },
       en: {
         'page.title': 'Documentation Dashboard',
@@ -748,6 +749,7 @@ export function getDashboardHtml(origin) {
         'toast.failedPhotos': 'Failed to load photos',
         'toast.failedSites': 'Failed to load sites',
         'error.azureConfig': 'Azure AD configuration error: the redirect URI must be registered as a "Single-page application" (not "Web") in the Azure app registration. See the README for setup instructions.',
+        'langSwitcher.label': 'Language',
       },
     };
     const DEFAULT_LOCALE = 'no';
