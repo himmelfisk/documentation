@@ -90,14 +90,19 @@ async function authenticate(request) {
       !iss.startsWith('https://login.microsoftonline.com/') ||
       !iss.endsWith('/v2.0')
     ) {
+      console.warn('JWT rejected: invalid issuer', iss);
       return null;
     }
 
     // tid (tenant ID) is required for data isolation
-    if (!payload.tid) return null;
+    if (!payload.tid) {
+      console.warn('JWT rejected: missing tid claim');
+      return null;
+    }
 
     return payload;
-  } catch {
+  } catch (err) {
+    console.warn('JWT verification failed:', err.message || err);
     return null;
   }
 }
