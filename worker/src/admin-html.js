@@ -791,7 +791,7 @@ export function getAdminHtml(origin) {
 
     function t(key) {
       const bundle = __locales[currentLocale] || __locales[DEFAULT_LOCALE];
-      return bundle[key] ?? __locales['en'][key] ?? key;
+      return bundle[key] ?? __locales[DEFAULT_LOCALE][key] ?? key;
     }
 
     function applyTranslations() {
