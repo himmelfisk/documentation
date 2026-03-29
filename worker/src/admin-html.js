@@ -565,7 +565,7 @@ export function getAdminHtml(origin) {
 <body>
   <!-- Language selector -->
   <div class="lang-switcher">
-    <select id="lang-select" aria-label="Språk">
+    <select id="lang-select" aria-label="Språk" data-i18n="langSwitcher.label" data-i18n-attr="aria-label">
       <option value="no">Norsk</option>
       <option value="en">English</option>
     </select>
@@ -727,6 +727,7 @@ export function getAdminHtml(origin) {
         'toast.failedSave': 'Kunne ikke lagre prosjekt',
         'toast.failedDelete': 'Kunne ikke slette prosjekt',
         'error.azureConfig': 'Azure AD-konfigurasjonsfeil: omdirigerings-URIen må være registrert som en «Single-page application» (ikke «Web») i Azure-appregistreringen. Se README for oppsettsinstruksjoner.',
+        'langSwitcher.label': 'Språk',
       },
       en: {
         'page.title': 'Admin — Sites',
@@ -774,6 +775,7 @@ export function getAdminHtml(origin) {
         'toast.failedSave': 'Failed to save site',
         'toast.failedDelete': 'Failed to delete site',
         'error.azureConfig': 'Azure AD configuration error: the redirect URI must be registered as a "Single-page application" (not "Web") in the Azure app registration. See the README for setup instructions.',
+        'langSwitcher.label': 'Language',
       },
     };
     const DEFAULT_LOCALE = 'no';
