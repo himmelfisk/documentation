@@ -15568,6 +15568,114 @@
     }
   });
 
+  // src/locales/sv.json
+  var sv_default;
+  var init_sv = __esm({
+    "src/locales/sv.json"() {
+      sv_default = {
+        "app.title": "Dokumentation",
+        "app.welcome": "V\xE4lkommen till Dokumentation-appen.",
+        "app.greeting": "Hej",
+        "photo.addButton": "\u{1F4F7} Skicka in dokumentation",
+        "photo.altText": "Taget foto",
+        "metadata.loading": "L\xE4ser positionsdata\u2026",
+        "metadata.latitude": "Latitud",
+        "metadata.longitude": "Longitud",
+        "metadata.altitude": "H\xF6jd",
+        "metadata.accuracy": "Noggrannhet",
+        "metadata.capturedAt": "Taget",
+        "metadata.source": "K\xE4lla",
+        "metadata.source.exif": "Foto-EXIF",
+        "metadata.source.device": "Enhets-GPS",
+        "metadata.source.none": "Ok\xE4nd",
+        "metadata.openMap": "\u{1F4CD} \xD6ppna i Google Maps",
+        "metadata.unavailable": "Positionsdata ej tillg\xE4nglig",
+        "metadata.exifHeader": "Fotodetaljer (EXIF)",
+        "upload.pending": "\u23F3 Laddar upp\u2026",
+        "upload.success": "\u2705 Sparat i databasen",
+        "upload.error": "\u274C Uppladdning misslyckades",
+        "login.title": "Logga in",
+        "login.subtitle": "Logga in med ditt Microsoft-konto f\xF6r att forts\xE4tta.",
+        "login.button": "Logga in med Microsoft",
+        "login.logout": "Logga ut",
+        "account.company": "F\xF6retag",
+        "account.tenantId": "Klient-ID"
+      };
+    }
+  });
+
+  // src/locales/da.json
+  var da_default;
+  var init_da = __esm({
+    "src/locales/da.json"() {
+      da_default = {
+        "app.title": "Dokumentation",
+        "app.welcome": "Velkommen til Dokumentation-appen.",
+        "app.greeting": "Hej",
+        "photo.addButton": "\u{1F4F7} Indsend dokumentation",
+        "photo.altText": "Taget billede",
+        "metadata.loading": "L\xE6ser positionsdata\u2026",
+        "metadata.latitude": "Breddegrad",
+        "metadata.longitude": "L\xE6ngdegrad",
+        "metadata.altitude": "H\xF8jde",
+        "metadata.accuracy": "N\xF8jagtighed",
+        "metadata.capturedAt": "Taget",
+        "metadata.source": "Kilde",
+        "metadata.source.exif": "Foto-EXIF",
+        "metadata.source.device": "Enheds-GPS",
+        "metadata.source.none": "Ukendt",
+        "metadata.openMap": "\u{1F4CD} \xC5bn i Google Maps",
+        "metadata.unavailable": "Positionsdata ikke tilg\xE6ngelig",
+        "metadata.exifHeader": "Fotodetaljer (EXIF)",
+        "upload.pending": "\u23F3 Uploader\u2026",
+        "upload.success": "\u2705 Gemt i databasen",
+        "upload.error": "\u274C Upload mislykkedes",
+        "login.title": "Log ind",
+        "login.subtitle": "Log ind med din Microsoft-konto for at forts\xE6tte.",
+        "login.button": "Log ind med Microsoft",
+        "login.logout": "Log ud",
+        "account.company": "Virksomhed",
+        "account.tenantId": "Lejer-ID"
+      };
+    }
+  });
+
+  // src/locales/pl.json
+  var pl_default;
+  var init_pl = __esm({
+    "src/locales/pl.json"() {
+      pl_default = {
+        "app.title": "Dokumentacja",
+        "app.welcome": "Witamy w aplikacji Dokumentacja.",
+        "app.greeting": "Cze\u015B\u0107",
+        "photo.addButton": "\u{1F4F7} Prze\u015Blij dokumentacj\u0119",
+        "photo.altText": "Zrobione zdj\u0119cie",
+        "metadata.loading": "Odczytywanie danych lokalizacji\u2026",
+        "metadata.latitude": "Szeroko\u015B\u0107 geograficzna",
+        "metadata.longitude": "D\u0142ugo\u015B\u0107 geograficzna",
+        "metadata.altitude": "Wysoko\u015B\u0107",
+        "metadata.accuracy": "Dok\u0142adno\u015B\u0107",
+        "metadata.capturedAt": "Zrobiono",
+        "metadata.source": "\u0179r\xF3d\u0142o",
+        "metadata.source.exif": "EXIF zdj\u0119cia",
+        "metadata.source.device": "GPS urz\u0105dzenia",
+        "metadata.source.none": "Nieznane",
+        "metadata.openMap": "\u{1F4CD} Otw\xF3rz w Google Maps",
+        "metadata.unavailable": "Dane lokalizacji niedost\u0119pne",
+        "metadata.exifHeader": "Szczeg\xF3\u0142y zdj\u0119cia (EXIF)",
+        "upload.pending": "\u23F3 Przesy\u0142anie\u2026",
+        "upload.success": "\u2705 Zapisano w bazie danych",
+        "upload.error": "\u274C Przesy\u0142anie nie powiod\u0142o si\u0119",
+        "login.title": "Zaloguj si\u0119",
+        "login.subtitle": "Zaloguj si\u0119 za pomoc\u0105 konta Microsoft, aby kontynuowa\u0107.",
+        "login.button": "Zaloguj si\u0119 przez Microsoft",
+        "login.logout": "Wyloguj si\u0119",
+        "account.company": "Firma",
+        "account.tenantId": "ID dzier\u017Cawcy"
+      };
+    }
+  });
+
   // src/js/i18n.js
   function getSavedLocale() {
     try {
@@ -15620,7 +15728,10 @@
     "src/js/i18n.js"() {
       init_en();
       init_no();
-      locales = { en: en_default, no: no_default };
+      init_sv();
+      init_da();
+      init_pl();
+      locales = { en: en_default, no: no_default, sv: sv_default, da: da_default, pl: pl_default };
       DEFAULT_LOCALE = "no";
       STORAGE_KEY = "app_locale";
       current = DEFAULT_LOCALE;

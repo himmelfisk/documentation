@@ -1,5 +1,8 @@
 import en from '../locales/en.json';
 import no from '../locales/no.json';
+import sv from '../locales/sv.json';
+import da from '../locales/da.json';
+import pl from '../locales/pl.json';
 
 /**
  * Lightweight i18n module.
@@ -10,7 +13,7 @@ import no from '../locales/no.json';
  *   3. Add an <option value="<code>"> to the language selector in index.html
  */
 
-const locales = { en, no };
+const locales = { en, no, sv, da, pl };
 const DEFAULT_LOCALE = 'no';
 const STORAGE_KEY = 'app_locale';
 
