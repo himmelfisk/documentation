@@ -1007,11 +1007,11 @@ export function getAdminHtml(origin) {
       if (accounts.length > 0) pca.setActiveAccount(accounts[0]);
     }
 
-    async function getIdToken() {
+    async function getIdToken(forceRefresh = false) {
       const account = pca.getActiveAccount();
       if (!account) return null;
       try {
-        const result = await pca.acquireTokenSilent({ ...loginRequest, account });
+        const result = await pca.acquireTokenSilent({ ...loginRequest, account, forceRefresh });
         return result.idToken;
       } catch (err) {
         console.warn('acquireTokenSilent failed:', err);
@@ -1099,7 +1099,27 @@ export function getAdminHtml(origin) {
         }
         if (!options.headers) options.headers = {};
         options.headers['Authorization'] = 'Bearer ' + token;
-        return fetch(url, options);
+        const res = await fetch(url, options);
+
+        // On 401, retry once with a fresh token before giving up
+        if (res.status === 401) {
+          const freshToken = await getIdToken(true);
+          if (!freshToken) {
+            showToast(t('toast.sessionExpired'), 'error');
+            setTimeout(() => pca.loginRedirect(loginRequest), 1500);
+            throw new Error('No token');
+          }
+          options.headers['Authorization'] = 'Bearer ' + freshToken;
+          const retryRes = await fetch(url, options);
+          if (retryRes.status === 401) {
+            showToast(t('toast.sessionExpired'), 'error');
+            setTimeout(() => pca.loginRedirect(loginRequest), 1500);
+            throw new Error('No token');
+          }
+          return retryRes;
+        }
+
+        return res;
       }
 
       async function fetchSites() {
