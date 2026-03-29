@@ -1110,7 +1110,13 @@ export function getAdminHtml(origin) {
             throw new Error('No token');
           }
           options.headers['Authorization'] = 'Bearer ' + freshToken;
-          return fetch(url, options);
+          const retryRes = await fetch(url, options);
+          if (retryRes.status === 401) {
+            showToast(t('toast.sessionExpired'), 'error');
+            setTimeout(() => pca.loginRedirect(loginRequest), 1500);
+            throw new Error('No token');
+          }
+          return retryRes;
         }
 
         return res;
