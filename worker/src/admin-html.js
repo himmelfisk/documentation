@@ -7,7 +7,7 @@
 
 export function getAdminHtml(origin) {
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="no">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -526,20 +526,62 @@ export function getAdminHtml(origin) {
 
     /* ---- Hidden ---- */
     [hidden] { display: none !important; }
+
+    /* ---- Language switcher ---- */
+    .lang-switcher {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      z-index: 100;
+    }
+
+    .lang-switcher select {
+      font-family: inherit;
+      font-size: 0.8rem;
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      background: #fff;
+      color: #333;
+      cursor: pointer;
+      -webkit-appearance: none;
+      appearance: none;
+      padding-right: 20px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 6px center;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .lang-switcher select {
+        background-color: #333;
+        color: #e0e0e0;
+        border-color: #555;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23aaa'/%3E%3C/svg%3E");
+      }
+    }
   </style>
 </head>
 <body>
+  <!-- Language selector -->
+  <div class="lang-switcher">
+    <select id="lang-select" aria-label="Språk">
+      <option value="no">Norsk</option>
+      <option value="en">English</option>
+    </select>
+  </div>
+
   <!-- Login screen (shown when not authenticated) -->
   <div class="login-screen" id="login-screen">
     <div class="login-card">
       <div class="icon">🏗️</div>
-      <h1>Site Admin</h1>
-      <p>Sign in with your Microsoft account to manage sites</p>
+      <h1 data-i18n="login.title">Prosjektadmin</h1>
+      <p data-i18n="login.subtitle">Logg inn med din Microsoft-konto for å administrere prosjekter</p>
       <button class="btn-login" id="login-btn" disabled>
         <svg width="20" height="20" viewBox="0 0 21 21" fill="none"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>
-        Sign in with Microsoft
+        <span data-i18n="login.button">Logg inn med Microsoft</span>
       </button>
-      <div class="login-status" id="login-status">Loading…</div>
+      <div class="login-status" id="login-status" data-i18n="login.loading">Laster…</div>
     </div>
   </div>
 
@@ -549,13 +591,13 @@ export function getAdminHtml(origin) {
     <header>
       <div class="header-row">
         <div>
-          <h1>🏗️ Site Admin</h1>
-          <p>Manage construction sites and locations</p>
+          <h1 data-i18n="header.title">🏗️ Prosjektadmin</h1>
+          <p data-i18n="header.subtitle">Administrer byggeprosjekter og lokasjoner</p>
         </div>
         <div class="user-bar">
-          <a class="btn-dashboard" href="/">← Dashboard</a>
+          <a class="btn-dashboard" href="/" data-i18n="header.dashboard">← Dashbord</a>
           <span class="user-name" id="user-name"></span>
-          <button class="btn-logout" id="logout-btn">Sign out</button>
+          <button class="btn-logout" id="logout-btn" data-i18n="header.logout">Logg ut</button>
         </div>
       </div>
     </header>
@@ -563,39 +605,39 @@ export function getAdminHtml(origin) {
     <!-- Site form (add / edit) -->
     <div id="site-form-section" hidden>
       <div class="card">
-        <h2 id="form-title">Add New Site</h2>
+        <h2 id="form-title" data-i18n="form.addTitle">Legg til nytt prosjekt</h2>
         <form id="site-form" autocomplete="off">
           <input type="hidden" id="site-id" value="">
 
           <div class="form-group">
-            <label for="site-name-input">Site Name *</label>
-            <input type="text" id="site-name-input" placeholder="e.g. Byggeprosjekt Aker Brygge" required>
+            <label for="site-name-input" data-i18n="form.nameLabel">Prosjektnavn *</label>
+            <input type="text" id="site-name-input" placeholder="f.eks. Byggeprosjekt Aker Brygge" data-i18n="form.namePlaceholder" data-i18n-attr="placeholder" required>
           </div>
 
           <div class="form-group">
-            <label for="site-desc-input">Description</label>
-            <textarea id="site-desc-input" rows="2" placeholder="Optional description of the site"></textarea>
+            <label for="site-desc-input" data-i18n="form.descLabel">Beskrivelse</label>
+            <textarea id="site-desc-input" rows="2" placeholder="Valgfri beskrivelse av prosjektet" data-i18n="form.descPlaceholder" data-i18n-attr="placeholder"></textarea>
           </div>
 
           <div class="form-group">
-            <label>Pick Location</label>
+            <label data-i18n="form.locationLabel">Velg lokasjon</label>
             <div id="map-container"></div>
             <input type="hidden" id="site-lat-input" value="">
             <input type="hidden" id="site-lng-input" value="">
             <div class="map-coords">
-              <span id="map-coords-display">Click the map to set a pin</span>
-              <button type="button" class="clear-pin" id="clear-pin-btn" aria-label="Clear pin" hidden>✕ Clear pin</button>
+              <span id="map-coords-display" data-i18n="form.mapInstruction">Klikk på kartet for å sette en markør</span>
+              <button type="button" class="clear-pin" id="clear-pin-btn" aria-label="Fjern markør" hidden data-i18n="form.clearPin">✕ Fjern markør</button>
             </div>
           </div>
 
           <div class="form-group">
-            <label for="site-address-input">Address</label>
-            <input type="text" id="site-address-input" placeholder="e.g. Dronning Eufemias gate 30, Oslo">
+            <label for="site-address-input" data-i18n="form.addressLabel">Adresse</label>
+            <input type="text" id="site-address-input" placeholder="f.eks. Dronning Eufemias gate 30, Oslo" data-i18n="form.addressPlaceholder" data-i18n-attr="placeholder">
           </div>
 
           <div class="form-actions">
-            <button type="submit" class="btn btn-primary" id="form-submit-btn">Add Site</button>
-            <button type="button" class="btn btn-secondary" id="form-cancel-btn">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="form-submit-btn" data-i18n="form.addSubmit">Legg til prosjekt</button>
+            <button type="button" class="btn btn-secondary" id="form-cancel-btn" data-i18n="form.cancel">Avbryt</button>
           </div>
         </form>
       </div>
@@ -604,12 +646,12 @@ export function getAdminHtml(origin) {
     <!-- Site list -->
     <div id="site-list-section">
       <div class="toolbar">
-        <h2>Sites <span id="site-count"></span></h2>
-        <button class="btn btn-primary btn-sm" id="add-site-btn">＋ Add Site</button>
+        <h2><span data-i18n="sites.title">Prosjekter</span> <span id="site-count"></span></h2>
+        <button class="btn btn-primary btn-sm" id="add-site-btn" data-i18n="sites.addButton">＋ Legg til prosjekt</button>
       </div>
 
       <div id="site-list" class="card">
-        <div class="loading" id="loading-indicator">Loading sites…</div>
+        <div class="loading" id="loading-indicator" data-i18n="sites.loading">Laster prosjekter…</div>
       </div>
     </div>
 
@@ -619,11 +661,11 @@ export function getAdminHtml(origin) {
   <!-- Delete confirmation -->
   <div class="overlay" id="delete-overlay">
     <div class="dialog">
-      <h3>Delete Site?</h3>
-      <p id="delete-message">Are you sure you want to delete this site?</p>
+      <h3 data-i18n="delete.title">Slette prosjekt?</h3>
+      <p id="delete-message" data-i18n="delete.message">Er du sikker på at du vil slette dette prosjektet?</p>
       <div class="dialog-actions">
-        <button class="btn btn-danger btn-sm" id="delete-confirm-btn">Delete</button>
-        <button class="btn btn-secondary btn-sm" id="delete-cancel-btn">Cancel</button>
+        <button class="btn btn-danger btn-sm" id="delete-confirm-btn" data-i18n="delete.confirm">Slett</button>
+        <button class="btn btn-secondary btn-sm" id="delete-cancel-btn" data-i18n="delete.cancel">Avbryt</button>
       </div>
     </div>
   </div>
@@ -636,6 +678,149 @@ export function getAdminHtml(origin) {
     // Note: SRI (integrity) is not used because jsDelivr's +esm transform
     // may change its output across deployments; a fixed hash would break the page.
     import { PublicClientApplication } from 'https://cdn.jsdelivr.net/npm/@azure/msal-browser@5.6.1/+esm';
+
+    // ---- i18n ----
+    const __locales = {
+      no: {
+        'page.title': 'Admin — Prosjekter',
+        'login.title': 'Prosjektadmin',
+        'login.subtitle': 'Logg inn med din Microsoft-konto for å administrere prosjekter',
+        'login.button': 'Logg inn med Microsoft',
+        'login.loading': 'Laster…',
+        'login.notSignedIn': 'Ikke innlogget',
+        'login.redirecting': 'Omdirigerer…',
+        'header.title': '🏗️ Prosjektadmin',
+        'header.subtitle': 'Administrer byggeprosjekter og lokasjoner',
+        'header.dashboard': '← Dashbord',
+        'header.logout': 'Logg ut',
+        'form.addTitle': 'Legg til nytt prosjekt',
+        'form.editTitle': 'Rediger prosjekt',
+        'form.nameLabel': 'Prosjektnavn *',
+        'form.namePlaceholder': 'f.eks. Byggeprosjekt Aker Brygge',
+        'form.descLabel': 'Beskrivelse',
+        'form.descPlaceholder': 'Valgfri beskrivelse av prosjektet',
+        'form.locationLabel': 'Velg lokasjon',
+        'form.mapInstruction': 'Klikk på kartet for å sette en markør',
+        'form.clearPin': '✕ Fjern markør',
+        'form.addressLabel': 'Adresse',
+        'form.addressPlaceholder': 'f.eks. Dronning Eufemias gate 30, Oslo',
+        'form.addSubmit': 'Legg til prosjekt',
+        'form.editSubmit': 'Lagre endringer',
+        'form.cancel': 'Avbryt',
+        'sites.title': 'Prosjekter',
+        'sites.addButton': '＋ Legg til prosjekt',
+        'sites.loading': 'Laster prosjekter…',
+        'sites.empty': 'Ingen prosjekter registrert ennå.<br>Trykk <strong>Legg til prosjekt</strong> for å komme i gang.',
+        'sites.noCoordinates': 'Ingen koordinater',
+        'sites.edit': 'Rediger',
+        'sites.delete': 'Slett',
+        'delete.title': 'Slette prosjekt?',
+        'delete.message': 'Er du sikker på at du vil slette dette prosjektet?',
+        'delete.messageNamed': 'Slette «{name}»? Dette kan ikke angres.',
+        'delete.confirm': 'Slett',
+        'delete.cancel': 'Avbryt',
+        'toast.siteAdded': 'Prosjekt lagt til',
+        'toast.siteUpdated': 'Prosjekt oppdatert',
+        'toast.siteDeleted': 'Prosjekt slettet',
+        'toast.sessionExpired': 'Økten utløpt — vennligst logg inn igjen',
+        'toast.failedLoad': 'Kunne ikke laste prosjekter',
+        'toast.failedSave': 'Kunne ikke lagre prosjekt',
+        'toast.failedDelete': 'Kunne ikke slette prosjekt',
+        'error.azureConfig': 'Azure AD-konfigurasjonsfeil: omdirigerings-URIen må være registrert som en «Single-page application» (ikke «Web») i Azure-appregistreringen. Se README for oppsettsinstruksjoner.',
+      },
+      en: {
+        'page.title': 'Admin — Sites',
+        'login.title': 'Site Admin',
+        'login.subtitle': 'Sign in with your Microsoft account to manage sites',
+        'login.button': 'Sign in with Microsoft',
+        'login.loading': 'Loading…',
+        'login.notSignedIn': 'Not signed in',
+        'login.redirecting': 'Redirecting…',
+        'header.title': '🏗️ Site Admin',
+        'header.subtitle': 'Manage construction sites and locations',
+        'header.dashboard': '← Dashboard',
+        'header.logout': 'Sign out',
+        'form.addTitle': 'Add New Site',
+        'form.editTitle': 'Edit Site',
+        'form.nameLabel': 'Site Name *',
+        'form.namePlaceholder': 'e.g. Byggeprosjekt Aker Brygge',
+        'form.descLabel': 'Description',
+        'form.descPlaceholder': 'Optional description of the site',
+        'form.locationLabel': 'Pick Location',
+        'form.mapInstruction': 'Click the map to set a pin',
+        'form.clearPin': '✕ Clear pin',
+        'form.addressLabel': 'Address',
+        'form.addressPlaceholder': 'e.g. Dronning Eufemias gate 30, Oslo',
+        'form.addSubmit': 'Add Site',
+        'form.editSubmit': 'Save Changes',
+        'form.cancel': 'Cancel',
+        'sites.title': 'Sites',
+        'sites.addButton': '＋ Add Site',
+        'sites.loading': 'Loading sites…',
+        'sites.empty': 'No sites registered yet.<br>Tap <strong>Add Site</strong> to get started.',
+        'sites.noCoordinates': 'No coordinates',
+        'sites.edit': 'Edit',
+        'sites.delete': 'Delete',
+        'delete.title': 'Delete Site?',
+        'delete.message': 'Are you sure you want to delete this site?',
+        'delete.messageNamed': 'Delete "{name}"? This cannot be undone.',
+        'delete.confirm': 'Delete',
+        'delete.cancel': 'Cancel',
+        'toast.siteAdded': 'Site added',
+        'toast.siteUpdated': 'Site updated',
+        'toast.siteDeleted': 'Site deleted',
+        'toast.sessionExpired': 'Session expired — please sign in again',
+        'toast.failedLoad': 'Failed to load sites',
+        'toast.failedSave': 'Failed to save site',
+        'toast.failedDelete': 'Failed to delete site',
+        'error.azureConfig': 'Azure AD configuration error: the redirect URI must be registered as a "Single-page application" (not "Web") in the Azure app registration. See the README for setup instructions.',
+      },
+    };
+    const DEFAULT_LOCALE = 'no';
+    const LOCALE_STORAGE_KEY = 'app_locale';
+
+    let currentLocale = (() => {
+      try {
+        const saved = localStorage.getItem(LOCALE_STORAGE_KEY);
+        if (saved && __locales[saved]) return saved;
+      } catch (_) {}
+      return DEFAULT_LOCALE;
+    })();
+
+    function t(key) {
+      const bundle = __locales[currentLocale] || __locales[DEFAULT_LOCALE];
+      return bundle[key] ?? __locales['en'][key] ?? key;
+    }
+
+    function applyTranslations() {
+      document.title = t('page.title');
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        const attr = el.getAttribute('data-i18n-attr');
+        if (attr) el.setAttribute(attr, t(key));
+        else el.textContent = t(key);
+      });
+    }
+
+    let onLocaleChange = null;
+
+    function setLocale(code) {
+      if (!__locales[code]) return;
+      currentLocale = code;
+      try { localStorage.setItem(LOCALE_STORAGE_KEY, code); } catch (_) {}
+      document.documentElement.lang = code;
+      applyTranslations();
+      if (onLocaleChange) onLocaleChange();
+    }
+
+    // Wire up language selector and apply initial translations
+    const langSelect = document.getElementById('lang-select');
+    if (langSelect) {
+      langSelect.value = currentLocale;
+      langSelect.addEventListener('change', (e) => setLocale(e.target.value));
+    }
+    document.documentElement.lang = currentLocale;
+    applyTranslations();
 
     // ---- MSAL configuration ----
     const CLIENT_ID = '65702384-9248-47a3-80d9-bcf5abb69424';
@@ -661,10 +846,7 @@ export function getAdminHtml(origin) {
     } catch (err) {
       // AADSTS9002326: redirect URI registered as "Web" instead of "SPA"
       if (err.errorCode === 'invalid_request' || (err.message && err.message.includes('AADSTS9002326'))) {
-        document.getElementById('login-status').textContent =
-          'Azure AD configuration error: the redirect URI must be registered ' +
-          'as a "Single-page application" (not "Web") in the Azure app registration. ' +
-          'See the README for setup instructions.';
+        document.getElementById('login-status').textContent = t('error.azureConfig');
         document.getElementById('login-btn').disabled = true;
       }
       throw err;
@@ -702,13 +884,13 @@ export function getAdminHtml(origin) {
       adminContent.hidden = false;
       userNameEl.textContent = account.name || account.username || '';
     } else {
-      loginStatus.textContent = 'Not signed in';
+      loginStatus.textContent = t('login.notSignedIn');
       loginBtn.disabled = false;
     }
 
     loginBtn.addEventListener('click', () => {
       loginBtn.disabled = true;
-      loginStatus.textContent = 'Redirecting…';
+      loginStatus.textContent = t('login.redirecting');
       pca.loginRedirect(loginRequest);
     });
 
@@ -762,7 +944,7 @@ export function getAdminHtml(origin) {
       async function authFetch(url, options = {}) {
         const token = await getIdToken();
         if (!token) {
-          showToast('Session expired — please sign in again', 'error');
+          showToast(t('toast.sessionExpired'), 'error');
           setTimeout(() => pca.loginRedirect(loginRequest), 1500);
           throw new Error('No token');
         }
@@ -774,7 +956,7 @@ export function getAdminHtml(origin) {
       async function fetchSites() {
         try {
           const res = await authFetch(API);
-          if (!res.ok) throw new Error('Failed to load sites');
+          if (!res.ok) throw new Error(t('toast.failedLoad'));
           const data = await res.json();
           sites = data.sites || [];
         } catch (err) {
@@ -797,7 +979,7 @@ export function getAdminHtml(origin) {
 
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
-          throw new Error(err.error || 'Failed to save site');
+          throw new Error(err.error || t('toast.failedSave'));
         }
         return res.json();
       }
@@ -806,7 +988,7 @@ export function getAdminHtml(origin) {
         const res = await authFetch(API + '/' + id, { method: 'DELETE' });
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
-          throw new Error(err.error || 'Failed to delete site');
+          throw new Error(err.error || t('toast.failedDelete'));
         }
       }
 
@@ -819,7 +1001,7 @@ export function getAdminHtml(origin) {
           siteList.innerHTML =
             '<div class="empty-state">' +
             '  <div class="icon">🏗️</div>' +
-            '  <p>No sites registered yet.<br>Tap <strong>Add Site</strong> to get started.</p>' +
+            '  <p>' + t('sites.empty') + '</p>' +
             '</div>';
           return;
         }
@@ -830,7 +1012,7 @@ export function getAdminHtml(origin) {
           const coordsHtml = hasCoords
             ? '<a href="https://www.google.com/maps?q=' + encodeURIComponent(site.latitude + ',' + site.longitude) +
               '" target="_blank" rel="noopener">' + Number(site.latitude).toFixed(5) + ', ' + Number(site.longitude).toFixed(5) + '</a>'
-            : '<span style="opacity:0.5">No coordinates</span>';
+            : '<span style="opacity:0.5">' + t('sites.noCoordinates') + '</span>';
 
           html +=
             '<div class="site-item" data-id="' + parseInt(site.id, 10) + '">' +
@@ -841,8 +1023,8 @@ export function getAdminHtml(origin) {
             '    <div class="site-coords">' + coordsHtml + '</div>' +
             '  </div>' +
             '  <div class="site-actions">' +
-            '    <button class="btn btn-secondary btn-sm edit-btn" data-id="' + parseInt(site.id, 10) + '">Edit</button>' +
-            '    <button class="btn btn-danger btn-sm delete-btn" data-id="' + parseInt(site.id, 10) + '">Delete</button>' +
+            '    <button class="btn btn-secondary btn-sm edit-btn" data-id="' + parseInt(site.id, 10) + '">' + t('sites.edit') + '</button>' +
+            '    <button class="btn btn-danger btn-sm delete-btn" data-id="' + parseInt(site.id, 10) + '">' + t('sites.delete') + '</button>' +
             '  </div>' +
             '</div>';
         }
@@ -886,7 +1068,7 @@ export function getAdminHtml(origin) {
       function clearPin() {
         siteLatInput.value = '';
         siteLngInput.value = '';
-        mapCoordsDisplay.textContent = 'Click the map to set a pin';
+        mapCoordsDisplay.textContent = t('form.mapInstruction');
         clearPinBtn.hidden = true;
         if (marker) {
           map.removeLayer(marker);
@@ -906,8 +1088,8 @@ export function getAdminHtml(origin) {
         setTimeout(() => map.invalidateSize(), 50);
 
         if (site) {
-          formTitle.textContent = 'Edit Site';
-          formSubmitBtn.textContent = 'Save Changes';
+          formTitle.textContent = t('form.editTitle');
+          formSubmitBtn.textContent = t('form.editSubmit');
           siteIdInput.value = site.id;
           siteNameInput.value = site.name || '';
           siteDescInput.value = site.description || '';
@@ -921,8 +1103,8 @@ export function getAdminHtml(origin) {
             map.setView(DEFAULT_CENTER, DEFAULT_ZOOM);
           }
         } else {
-          formTitle.textContent = 'Add New Site';
-          formSubmitBtn.textContent = 'Add Site';
+          formTitle.textContent = t('form.addTitle');
+          formSubmitBtn.textContent = t('form.addSubmit');
           siteForm.reset();
           siteIdInput.value = '';
           clearPin();
@@ -959,7 +1141,7 @@ export function getAdminHtml(origin) {
 
         try {
           await saveSite(siteData);
-          showToast(siteData.id ? 'Site updated' : 'Site added', 'success');
+          showToast(siteData.id ? t('toast.siteUpdated') : t('toast.siteAdded'), 'success');
           hideForm();
           await fetchSites();
         } catch (err) {
@@ -985,8 +1167,8 @@ export function getAdminHtml(origin) {
           const site = sites.find(s => s.id === id);
           deleteTargetId = id;
           deleteMessage.textContent = site
-            ? 'Delete "' + site.name + '"? This cannot be undone.'
-            : 'Are you sure you want to delete this site?';
+            ? t('delete.messageNamed').replace('{name}', site.name)
+            : t('delete.message');
           deleteOverlay.classList.add('active');
           return;
         }
@@ -996,7 +1178,7 @@ export function getAdminHtml(origin) {
         if (deleteTargetId == null) return;
         try {
           await deleteSite(deleteTargetId);
-          showToast('Site deleted', 'success');
+          showToast(t('toast.siteDeleted'), 'success');
           deleteOverlay.classList.remove('active');
           deleteTargetId = null;
           await fetchSites();
@@ -1017,6 +1199,11 @@ export function getAdminHtml(origin) {
           deleteTargetId = null;
         }
       });
+
+      // Re-render when language changes
+      onLocaleChange = () => {
+        render();
+      };
 
       // ---- Init ----
       fetchSites();
