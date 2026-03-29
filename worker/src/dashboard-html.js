@@ -583,11 +583,11 @@ export function getDashboardHtml(origin) {
   <!-- Language selector -->
   <div class="lang-switcher">
     <select id="lang-select" aria-label="Språk" data-i18n="langSwitcher.label" data-i18n-attr="aria-label">
-      <option value="no">Norsk</option>
-      <option value="en">English</option>
-      <option value="sv">Svenska</option>
-      <option value="da">Dansk</option>
-      <option value="pl">Polski</option>
+      <option value="no">🇳🇴 Norsk</option>
+      <option value="en">🇬🇧 English</option>
+      <option value="sv">🇸🇪 Svenska</option>
+      <option value="da">🇩🇰 Dansk</option>
+      <option value="pl">🇵🇱 Polski</option>
     </select>
   </div>
 
