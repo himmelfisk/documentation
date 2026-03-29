@@ -13,7 +13,7 @@ export function getDashboardHtml(origin) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light dark">
-  <title>Documentation Dashboard</title>
+  <title>Dokumentasjon — Dashbord</title>
   <style>
     /* ---- Reset & base ---- */
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1102,7 +1102,7 @@ export function getDashboardHtml(origin) {
               ? '<img data-auth-src="' + escapeHtml(photo.imageurl) + '" alt="' + altText + '" tabindex="0" role="button">'
               : '<div style="height:160px;display:flex;align-items:center;justify-content:center;background:#e8e8e8;color:#aaa;font-size:2rem">📷</div>') +
             '  <div class="photo-meta">' +
-            '    <div class="photo-user">' + escapeHtml(photo.user || 'Unknown') + '</div>' +
+            '    <div class="photo-user">' + escapeHtml(photo.user || t('photos.unknown')) + '</div>' +
             (photo.imagelocation
               ? '    <div class="photo-location">📍 ' + escapeHtml(photo.imagelocation) + '</div>'
               : '') +
