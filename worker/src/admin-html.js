@@ -873,7 +873,7 @@ export function getAdminHtml(origin) {
         'toast.failedLoad': 'Kunne ikke indlæse projekter',
         'toast.failedSave': 'Kunne ikke gemme projekt',
         'toast.failedDelete': 'Kunne ikke slette projekt',
-        'error.azureConfig': 'Azure AD-konfigurationsfejl: omdirigerings-URI\'en skal være registreret som en "Single-page application" (ikke "Web") i Azure-appregistreringen. Se README for opsætningsinstruktioner.',
+        'error.azureConfig': 'Azure AD-konfigurationsfejl: omdirigerings-URI\\'en skal være registreret som en "Single-page application" (ikke "Web") i Azure-appregistreringen. Se README for opsætningsinstruktioner.',
         'langSwitcher.label': 'Sprog',
       },
       pl: {

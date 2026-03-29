@@ -827,7 +827,7 @@ export function getDashboardHtml(origin) {
         'toast.sessionExpired': 'Sessionen er udløbet — log venligst ind igen',
         'toast.failedPhotos': 'Kunne ikke indlæse billeder',
         'toast.failedSites': 'Kunne ikke indlæse projekter',
-        'error.azureConfig': 'Azure AD-konfigurationsfejl: omdirigerings-URI\'en skal være registreret som en "Single-page application" (ikke "Web") i Azure-appregistreringen. Se README for opsætningsinstruktioner.',
+        'error.azureConfig': 'Azure AD-konfigurationsfejl: omdirigerings-URI\\'en skal være registreret som en "Single-page application" (ikke "Web") i Azure-appregistreringen. Se README for opsætningsinstruktioner.',
         'langSwitcher.label': 'Sprog',
       },
       pl: {
