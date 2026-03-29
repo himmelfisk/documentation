@@ -8,12 +8,12 @@
 
 export function getDashboardHtml(origin) {
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="no">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light dark">
-  <title>Documentation Dashboard</title>
+  <title>Dokumentasjon — Dashbord</title>
   <style>
     /* ---- Reset & base ---- */
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -543,20 +543,62 @@ export function getDashboardHtml(origin) {
 
     /* Make photo cards indicate they are clickable for fullscreen */
     .photo-card img { cursor: zoom-in; }
+
+    /* ---- Language switcher ---- */
+    .lang-switcher {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      z-index: 100;
+    }
+
+    .lang-switcher select {
+      font-family: inherit;
+      font-size: 0.8rem;
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      background: #fff;
+      color: #333;
+      cursor: pointer;
+      -webkit-appearance: none;
+      appearance: none;
+      padding-right: 20px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 6px center;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .lang-switcher select {
+        background-color: #333;
+        color: #e0e0e0;
+        border-color: #555;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23aaa'/%3E%3C/svg%3E");
+      }
+    }
   </style>
 </head>
 <body>
+  <!-- Language selector -->
+  <div class="lang-switcher">
+    <select id="lang-select" aria-label="Språk" data-i18n="langSwitcher.label" data-i18n-attr="aria-label">
+      <option value="no">Norsk</option>
+      <option value="en">English</option>
+    </select>
+  </div>
+
   <!-- Login screen (shown when not authenticated) -->
   <div class="login-screen" id="login-screen">
     <div class="login-card">
       <div class="icon">📋</div>
-      <h1>Documentation</h1>
-      <p>Sign in with your Microsoft account to view your dashboard</p>
+      <h1 data-i18n="login.title">Dokumentasjon</h1>
+      <p data-i18n="login.subtitle">Logg inn med din Microsoft-konto for å se dashbordet ditt</p>
       <button class="btn-login" id="login-btn" disabled>
         <svg width="20" height="20" viewBox="0 0 21 21" fill="none"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>
-        Sign in with Microsoft
+        <span data-i18n="login.button">Logg inn med Microsoft</span>
       </button>
-      <div class="login-status" id="login-status">Loading…</div>
+      <div class="login-status" id="login-status" data-i18n="login.loading">Laster…</div>
     </div>
   </div>
 
@@ -566,13 +608,13 @@ export function getDashboardHtml(origin) {
     <header>
       <div class="header-row">
         <div>
-          <h1>📋 Documentation</h1>
-          <p>Your project dashboard</p>
+          <h1 data-i18n="header.title">📋 Dokumentasjon</h1>
+          <p data-i18n="header.subtitle">Ditt prosjekt-dashbord</p>
         </div>
         <div class="user-bar">
-          <a class="btn-admin" id="admin-link" href="/admin" hidden>⚙️ Admin</a>
+          <a class="btn-admin" id="admin-link" href="/admin" hidden data-i18n="header.admin">⚙️ Admin</a>
           <span class="user-name" id="user-name"></span>
-          <button class="btn-logout" id="logout-btn">Sign out</button>
+          <button class="btn-logout" id="logout-btn" data-i18n="header.logout">Logg ut</button>
         </div>
       </div>
     </header>
@@ -581,36 +623,36 @@ export function getDashboardHtml(origin) {
     <div class="stats-row" id="stats-row">
       <div class="stat-card">
         <div class="stat-number" id="stat-photos">–</div>
-        <div class="stat-label">Photos</div>
+        <div class="stat-label" data-i18n="stats.photos">Bilder</div>
       </div>
       <div class="stat-card">
         <div class="stat-number" id="stat-sites">–</div>
-        <div class="stat-label">Sites</div>
+        <div class="stat-label" data-i18n="stats.sites">Prosjekter</div>
       </div>
     </div>
 
     <!-- Tabs -->
     <div class="tabs">
-      <button class="tab-btn active" data-tab="sites">🏗️ Sites</button>
-      <button class="tab-btn" data-tab="photos">📷 Photos</button>
+      <button class="tab-btn active" data-tab="sites" data-i18n="tab.sites">🏗️ Prosjekter</button>
+      <button class="tab-btn" data-tab="photos" data-i18n="tab.photos">📷 Bilder</button>
     </div>
 
     <!-- Sites tab (default view) -->
     <div id="tab-sites">
-      <div class="loading" id="sites-loading">Loading sites…</div>
+      <div class="loading" id="sites-loading" data-i18n="sites.loading">Laster prosjekter…</div>
       <div class="card" id="site-list"></div>
     </div>
 
     <!-- Photos tab -->
     <div id="tab-photos" hidden>
       <div class="site-detail-header" id="site-detail-header" hidden>
-        <button class="btn-back" id="back-to-sites-btn">← All Sites</button>
+        <button class="btn-back" id="back-to-sites-btn" data-i18n="photos.backToSites">← Alle prosjekter</button>
         <div>
           <div class="site-detail-title" id="site-detail-name"></div>
           <div class="site-detail-subtitle" id="site-detail-count"></div>
         </div>
       </div>
-      <div class="loading" id="photos-loading">Loading photos…</div>
+      <div class="loading" id="photos-loading" data-i18n="photos.loading">Laster bilder…</div>
       <div class="photo-grid" id="photo-grid"></div>
     </div>
 
@@ -622,14 +664,139 @@ export function getDashboardHtml(origin) {
 
   <!-- Fullscreen lightbox overlay -->
   <div class="lightbox-overlay" id="lightbox-overlay">
-    <button class="lightbox-close" id="lightbox-close" aria-label="Close">&times;</button>
-    <button class="lightbox-nav lightbox-prev" id="lightbox-prev" aria-label="Previous photo">&#8249;</button>
+    <button class="lightbox-close" id="lightbox-close" aria-label="Lukk" data-i18n="lightbox.close" data-i18n-attr="aria-label">&times;</button>
+    <button class="lightbox-nav lightbox-prev" id="lightbox-prev" aria-label="Forrige bilde" data-i18n="lightbox.prev" data-i18n-attr="aria-label">&#8249;</button>
     <img class="lightbox-img" id="lightbox-img" alt="Full size image">
-    <button class="lightbox-nav lightbox-next" id="lightbox-next" aria-label="Next photo">&#8250;</button>
+    <button class="lightbox-nav lightbox-next" id="lightbox-next" aria-label="Neste bilde" data-i18n="lightbox.next" data-i18n-attr="aria-label">&#8250;</button>
   </div>
 
   <script type="module">
     import { PublicClientApplication } from 'https://cdn.jsdelivr.net/npm/@azure/msal-browser@5.6.1/+esm';
+
+    // ---- i18n ----
+    const __locales = {
+      no: {
+        'page.title': 'Dokumentasjon — Dashbord',
+        'login.title': 'Dokumentasjon',
+        'login.subtitle': 'Logg inn med din Microsoft-konto for å se dashbordet ditt',
+        'login.button': 'Logg inn med Microsoft',
+        'login.loading': 'Laster…',
+        'login.notSignedIn': 'Ikke innlogget',
+        'login.redirecting': 'Omdirigerer…',
+        'header.title': '📋 Dokumentasjon',
+        'header.subtitle': 'Ditt prosjekt-dashbord',
+        'header.admin': '⚙️ Admin',
+        'header.logout': 'Logg ut',
+        'stats.photos': 'Bilder',
+        'stats.sites': 'Prosjekter',
+        'tab.sites': '🏗️ Prosjekter',
+        'tab.photos': '📷 Bilder',
+        'sites.loading': 'Laster prosjekter…',
+        'sites.empty': 'Ingen prosjekter registrert ennå.',
+        'photos.loading': 'Laster bilder…',
+        'photos.empty': 'Ingen bilder ennå.<br>Last opp bilder fra mobilappen.',
+        'photos.emptySite': 'Ingen dokumentasjon for dette prosjektet ennå.<br>Last opp bilder nær dette prosjektet fra mobilappen.',
+        'photos.backToSites': '← Alle prosjekter',
+        'photos.singular': 'bilde',
+        'photos.plural': 'bilder',
+        'photos.nearSuffix': ' nær dette prosjektet',
+        'photos.by': 'Bilde av',
+        'photos.at': 'ved',
+        'photos.unknown': 'Ukjent',
+        'photos.failedLoad': 'Kunne ikke laste bilde',
+        'lightbox.close': 'Lukk',
+        'lightbox.prev': 'Forrige bilde',
+        'lightbox.next': 'Neste bilde',
+        'toast.sessionExpired': 'Økten utløpt — vennligst logg inn igjen',
+        'toast.failedPhotos': 'Kunne ikke laste bilder',
+        'toast.failedSites': 'Kunne ikke laste prosjekter',
+        'error.azureConfig': 'Azure AD-konfigurasjonsfeil: omdirigerings-URIen må være registrert som en «Single-page application» (ikke «Web») i Azure-appregistreringen. Se README for oppsettsinstruksjoner.',
+        'langSwitcher.label': 'Språk',
+      },
+      en: {
+        'page.title': 'Documentation Dashboard',
+        'login.title': 'Documentation',
+        'login.subtitle': 'Sign in with your Microsoft account to view your dashboard',
+        'login.button': 'Sign in with Microsoft',
+        'login.loading': 'Loading…',
+        'login.notSignedIn': 'Not signed in',
+        'login.redirecting': 'Redirecting…',
+        'header.title': '📋 Documentation',
+        'header.subtitle': 'Your project dashboard',
+        'header.admin': '⚙️ Admin',
+        'header.logout': 'Sign out',
+        'stats.photos': 'Photos',
+        'stats.sites': 'Sites',
+        'tab.sites': '🏗️ Sites',
+        'tab.photos': '📷 Photos',
+        'sites.loading': 'Loading sites…',
+        'sites.empty': 'No sites registered yet.',
+        'photos.loading': 'Loading photos…',
+        'photos.empty': 'No photos yet.<br>Upload photos from the mobile app.',
+        'photos.emptySite': 'No documentation for this site yet.<br>Upload photos near this site from the mobile app.',
+        'photos.backToSites': '← All Sites',
+        'photos.singular': 'photo',
+        'photos.plural': 'photos',
+        'photos.nearSuffix': ' near this site',
+        'photos.by': 'Photo by',
+        'photos.at': 'at',
+        'photos.unknown': 'Unknown',
+        'photos.failedLoad': 'Failed to load image',
+        'lightbox.close': 'Close',
+        'lightbox.prev': 'Previous photo',
+        'lightbox.next': 'Next photo',
+        'toast.sessionExpired': 'Session expired — please sign in again',
+        'toast.failedPhotos': 'Failed to load photos',
+        'toast.failedSites': 'Failed to load sites',
+        'error.azureConfig': 'Azure AD configuration error: the redirect URI must be registered as a "Single-page application" (not "Web") in the Azure app registration. See the README for setup instructions.',
+        'langSwitcher.label': 'Language',
+      },
+    };
+    const DEFAULT_LOCALE = 'no';
+    const LOCALE_STORAGE_KEY = 'app_locale';
+
+    let currentLocale = (() => {
+      try {
+        const saved = localStorage.getItem(LOCALE_STORAGE_KEY);
+        if (saved && __locales[saved]) return saved;
+      } catch (_) {}
+      return DEFAULT_LOCALE;
+    })();
+
+    function t(key) {
+      const bundle = __locales[currentLocale] || __locales[DEFAULT_LOCALE];
+      return bundle[key] ?? __locales[DEFAULT_LOCALE][key] ?? key;
+    }
+
+    function applyTranslations() {
+      document.title = t('page.title');
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        const attr = el.getAttribute('data-i18n-attr');
+        if (attr) el.setAttribute(attr, t(key));
+        else el.textContent = t(key);
+      });
+    }
+
+    let onLocaleChange = null;
+
+    function setLocale(code) {
+      if (!__locales[code]) return;
+      currentLocale = code;
+      try { localStorage.setItem(LOCALE_STORAGE_KEY, code); } catch (_) {}
+      document.documentElement.lang = code;
+      applyTranslations();
+      if (onLocaleChange) onLocaleChange();
+    }
+
+    // Wire up language selector and apply initial translations
+    const langSelect = document.getElementById('lang-select');
+    if (langSelect) {
+      langSelect.value = currentLocale;
+      langSelect.addEventListener('change', (e) => setLocale(e.target.value));
+    }
+    document.documentElement.lang = currentLocale;
+    applyTranslations();
 
     // ---- MSAL configuration ----
     const CLIENT_ID = '65702384-9248-47a3-80d9-bcf5abb69424';
@@ -655,10 +822,7 @@ export function getDashboardHtml(origin) {
     } catch (err) {
       // AADSTS9002326: redirect URI registered as "Web" instead of "SPA"
       if (err.errorCode === 'invalid_request' || (err.message && err.message.includes('AADSTS9002326'))) {
-        document.getElementById('login-status').textContent =
-          'Azure AD configuration error: the redirect URI must be registered ' +
-          'as a "Single-page application" (not "Web") in the Azure app registration. ' +
-          'See the README for setup instructions.';
+        document.getElementById('login-status').textContent = t('error.azureConfig');
         document.getElementById('login-btn').disabled = true;
       }
       throw err;
@@ -697,13 +861,13 @@ export function getDashboardHtml(origin) {
       dashboardContent.hidden = false;
       userNameEl.textContent = account.name || account.username || '';
     } else {
-      loginStatus.textContent = 'Not signed in';
+      loginStatus.textContent = t('login.notSignedIn');
       loginBtn.disabled = false;
     }
 
     loginBtn.addEventListener('click', () => {
       loginBtn.disabled = true;
-      loginStatus.textContent = 'Redirecting…';
+      loginStatus.textContent = t('login.redirecting');
       pca.loginRedirect(loginRequest);
     });
 
@@ -732,7 +896,7 @@ export function getDashboardHtml(origin) {
       async function authFetch(url, options = {}) {
         const token = await getIdToken();
         if (!token) {
-          showToast('Session expired — please sign in again', 'error');
+          showToast(t('toast.sessionExpired'), 'error');
           setTimeout(() => pca.loginRedirect(loginRequest), 1500);
           throw new Error('No token');
         }
@@ -861,7 +1025,7 @@ export function getDashboardHtml(origin) {
       async function fetchPhotos() {
         try {
           const res = await authFetch(PHOTOS_API);
-          if (!res.ok) throw new Error('Failed to load photos');
+          if (!res.ok) throw new Error(t('toast.failedPhotos'));
           const data = await res.json();
           photos = data.photos || [];
           statPhotos.textContent = photos.length;
@@ -898,7 +1062,7 @@ export function getDashboardHtml(origin) {
           img.src = blobUrl;
         } catch (err) {
           console.warn('Failed to load image', url, err);
-          img.alt = 'Failed to load image';
+          img.alt = t('photos.failedLoad');
         }
       }
 
@@ -918,9 +1082,7 @@ export function getDashboardHtml(origin) {
         const displayPhotos = activeSiteId !== null ? photosForSite(activeSiteId) : photos;
 
         if (displayPhotos.length === 0) {
-          const msg = activeSiteId !== null
-            ? 'No documentation for this site yet.<br>Upload photos near this site from the mobile app.'
-            : 'No photos yet.<br>Upload photos from the mobile app.';
+          const msg = activeSiteId !== null ? t('photos.emptySite') : t('photos.empty');
           photoGrid.innerHTML =
             '<div class="empty-state" style="grid-column:1/-1">' +
             '  <div class="icon">📷</div>' +
@@ -933,14 +1095,14 @@ export function getDashboardHtml(origin) {
         for (const photo of displayPhotos) {
           const date = photo.created ? new Date(photo.created).toLocaleDateString() : '';
           const hasImage = !!photo.imageurl;
-          const altText = 'Photo by ' + escapeHtml(photo.user || 'Unknown') + (photo.imagelocation ? ' at ' + escapeHtml(photo.imagelocation) : '');
+          const altText = t('photos.by') + ' ' + escapeHtml(photo.user || t('photos.unknown')) + (photo.imagelocation ? ' ' + t('photos.at') + ' ' + escapeHtml(photo.imagelocation) : '');
           html +=
             '<div class="photo-card">' +
             (hasImage
               ? '<img data-auth-src="' + escapeHtml(photo.imageurl) + '" alt="' + altText + '" tabindex="0" role="button">'
               : '<div style="height:160px;display:flex;align-items:center;justify-content:center;background:#e8e8e8;color:#aaa;font-size:2rem">📷</div>') +
             '  <div class="photo-meta">' +
-            '    <div class="photo-user">' + escapeHtml(photo.user || 'Unknown') + '</div>' +
+            '    <div class="photo-user">' + escapeHtml(photo.user || t('photos.unknown')) + '</div>' +
             (photo.imagelocation
               ? '    <div class="photo-location">📍 ' + escapeHtml(photo.imagelocation) + '</div>'
               : '') +
@@ -1027,7 +1189,7 @@ export function getDashboardHtml(origin) {
       async function fetchSites() {
         try {
           const res = await authFetch(SITES_API);
-          if (!res.ok) throw new Error('Failed to load sites');
+          if (!res.ok) throw new Error(t('toast.failedSites'));
           const data = await res.json();
           sites = data.sites || [];
           statSites.textContent = sites.length;
@@ -1046,7 +1208,7 @@ export function getDashboardHtml(origin) {
           siteListEl.innerHTML =
             '<div class="empty-state">' +
             '  <div class="icon">🏗️</div>' +
-            '  <p>No sites registered yet.</p>' +
+            '  <p>' + t('sites.empty') + '</p>' +
             '</div>';
           return;
         }
@@ -1062,7 +1224,7 @@ export function getDashboardHtml(origin) {
             '    <div class="site-name">' + escapeHtml(site.name) + '</div>' +
             (site.description ? '    <div class="site-desc">' + escapeHtml(site.description) + '</div>' : '') +
             (site.address ? '    <div class="site-desc">📍 ' + escapeHtml(site.address) + '</div>' : '') +
-            '    <div class="site-desc">📷 ' + count + ' photo' + (count !== 1 ? 's' : '') + '</div>' +
+            '    <div class="site-desc">📷 ' + count + ' ' + (count !== 1 ? t('photos.plural') : t('photos.singular')) + '</div>' +
             '  </div>' +
             '  <div class="site-chevron">›</div>' +
             '</div>';
@@ -1085,7 +1247,7 @@ export function getDashboardHtml(origin) {
         activeSiteId = siteId;
         const count = photosForSite(siteId).length;
         siteDetailName.textContent = '🏗️ ' + site.name;
-        siteDetailCount.textContent = count + ' photo' + (count !== 1 ? 's' : '') + ' near this site';
+        siteDetailCount.textContent = count + ' ' + (count !== 1 ? t('photos.plural') : t('photos.singular')) + t('photos.nearSuffix');
         siteDetailHeader.hidden = false;
 
         // Switch to photos tab
@@ -1096,6 +1258,21 @@ export function getDashboardHtml(origin) {
 
         renderPhotos();
       }
+
+      // Re-render dynamic content when language changes
+      onLocaleChange = () => {
+        renderPhotos();
+        renderSites();
+        // Update site detail header if visible
+        if (activeSiteId !== null) {
+          const site = sites.find(s => s.id === activeSiteId);
+          if (site) {
+            const count = photosForSite(activeSiteId).length;
+            siteDetailName.textContent = '🏗️ ' + site.name;
+            siteDetailCount.textContent = count + ' ' + (count !== 1 ? t('photos.plural') : t('photos.singular')) + t('photos.nearSuffix');
+          }
+        }
+      };
 
       // ---- Init ----
       checkAdmin();
